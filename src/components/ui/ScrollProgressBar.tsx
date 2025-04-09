@@ -220,21 +220,20 @@ export const ScrollProgressBar = ({
 
         {/* Percentage indicator with cyberpunk styling */}
         {showPercentage && (
-          <motion.div
-            className="fixed top-2 right-4 dark:bg-black/70 backdrop-blur-sm border border-purple-500/30 text-white px-3 py-1 rounded-md text-sm font-mono flex items-center justify-center"
+            <motion.div className="fixed top-2 left-1/2 transform -translate-x-1/2 dark:bg-black/70 backdrop-blur-sm border border-purple-500/30 text-white px-3 py-1 rounded-md text-sm font-mono flex items-center justify-center"
             style={{ zIndex }}
             initial={{ opacity: 0, y: -10 }}
             animate={{
               opacity: 1,
               y: 0,
               scale:
-                scrollPercentage === 100 ? [1, 1.2, 1] : isHovered ? 1.05 : 1,
+              scrollPercentage === 100 ? [1, 1.2, 1] : isHovered ? 1.05 : 1,
             }}
             transition={{
               duration: 0.5,
               ease: "easeInOut",
             }}
-          >
+            >
             <motion.div
               className="mr-2 text-xs uppercase tracking-wider"
               animate={
