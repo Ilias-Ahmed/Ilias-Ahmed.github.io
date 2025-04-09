@@ -2,7 +2,7 @@ import { certifications, timelineData } from "@/components/about/aboutData";
 import CertificationsGallery from "@/components/about/CertificationsGallery";
 import ExperienceTimeline from "@/components/about/ExperienceTimeline";
 import ProfileCard from "@/components/about/ProfileCard";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSpring, animated } from "@react-spring/web";
 import { AnimatePresence, motion, useInView } from "framer-motion";
 import { useEffect, useRef, useState, useCallback } from "react";

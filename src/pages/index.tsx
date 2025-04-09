@@ -16,6 +16,7 @@ import { useVoiceNavigation } from "@/hooks/useVoiceNavigation";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
 import { ScrollProgressBar } from "@/components/ui/ScrollProgressBar";
+import Hero from "@/sections/Hero";
 
 // Lazy-loaded components
 const DynamicBackground = React.lazy(
@@ -236,7 +237,7 @@ const Index = () => {
   const renderSection = useCallback(() => {
     switch (location.pathname) {
       case "/":
-        return null;
+        return <Hero />;
       case "/about":
         return <AboutSection />;
       case "/skills":
@@ -379,3 +380,4 @@ const Index = () => {
 
 // Use memo to prevent unnecessary re-renders of the entire component
 export default React.memo(Index);
+
