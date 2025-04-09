@@ -31,14 +31,13 @@ const AboutSection = () => {
 
   // Improved mouse move handler with validation
   const handleMouseMove = useCallback(
-    (e) => {
-      if (!e) return;
+        (e: React.MouseEvent<HTMLElement>) => {
+          if (!e) return;
 
-      const x = (e.clientX / window.innerWidth) * 2 - 1;
-      const y = (e.clientY / window.innerHeight) * 2 - 1;
-      api.start({ offset: [x * 15, y * 15] });
-    },
-    [api]
+          const x = (e.clientX / window.innerWidth) * 2 - 1;
+          const y = (e.clientY / window.innerHeight) * 2 - 1;
+          api.start({ offset: [x * 15, y * 15] });
+        },    [api]
   );
 
   // Animation variants
@@ -88,8 +87,16 @@ const AboutSection = () => {
     >
       {/* Floating gradient orbs with mouse parallax effect */}
       <animated.div
-        className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-primary/10 blur-[100px] opacity-60"
         style={{
+          position: "absolute",
+          top: "25%",
+          left: "25%",
+          width: "16rem",
+          height: "16rem",
+          borderRadius: "9999px",
+          backgroundColor: "rgba(59, 130, 246, 0.1)",
+          filter: "blur(100px)",
+          opacity: 0.6,
           transform: offset.to(
             (x, y) =>
               `translate(${scrollY * 0.05 + x}px, ${-scrollY * 0.02 + y}px)`
@@ -98,8 +105,16 @@ const AboutSection = () => {
         aria-hidden="true"
       />
       <animated.div
-        className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-full bg-purple-500/10 blur-[120px] opacity-50"
         style={{
+          position: "absolute",
+          bottom: "33.333%",
+          right: "25%",
+          width: "20rem",
+          height: "20rem",
+          borderRadius: "9999px",
+          background: "rgba(168, 85, 247, 0.1)",
+          filter: "blur(120px)",
+          opacity: 0.5,
           transform: offset.to(
             (x, y) =>
               `translate(${-scrollY * 0.03 - x * 0.8}px, ${
@@ -110,8 +125,16 @@ const AboutSection = () => {
         aria-hidden="true"
       />
       <animated.div
-        className="absolute top-2/3 right-1/3 w-48 h-48 rounded-full bg-blue-500/10 blur-[80px] opacity-60"
         style={{
+          position: "absolute",
+          top: "66.6667%",
+          right: "33.3333%",
+          width: "12rem",
+          height: "12rem",
+          borderRadius: "9999px",
+          backgroundColor: "rgba(59, 130, 246, 0.1)",
+          filter: "blur(80px)",
+          opacity: 0.6,
           transform: offset.to(
             (x, y) =>
               `translate(${scrollY * 0.02 + x * 1.2}px, ${
@@ -242,7 +265,7 @@ const AboutSection = () => {
             <span className="animate-pulse" aria-hidden="true">
               ✨
             </span>
-            <span>There&apos;s more than meets the eye...</span>
+            <span>There's more than meets the eye...</span>
             <span className="animate-pulse" aria-hidden="true">
               ✨
             </span>
@@ -252,5 +275,4 @@ const AboutSection = () => {
     </section>
   );
 };
-
 export default AboutSection;

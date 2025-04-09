@@ -10,12 +10,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useDrag } from "@use-gesture/react";
 import { useScrollSpy } from "@/hooks/useScrollSpy";
-import SmoothScroll, { useLenis } from "@/components/SmoothScroll";
+import SmoothScroll  from "@/components/SmoothScroll";
 import { useKeyboardNavigation } from "@/hooks/useKeyboardNavigation";
 import { useVoiceNavigation } from "@/hooks/useVoiceNavigation";
 import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
 import { ScrollProgressBar } from "@/components/ui/ScrollProgressBar";
+import type Lenis from "@studio-freight/lenis";
 import Hero from "@/sections/Hero";
 
 // Lazy-loaded components
@@ -161,7 +162,15 @@ const Index = () => {
 
   // Handle gesture-based navigation with useCallback
   const handleDrag = useCallback(
-    ({ direction: [xDir], distance, cancel }) => {
+    ({
+      direction: [xDir],
+      distance,
+      cancel,
+    }: {
+      direction: [number, number];
+      distance: [number, number];
+      cancel: () => void;
+    }) => {
       if (Math.sqrt(distance[0] ** 2 + distance[1] ** 2) > 100) {
         cancel();
         const currentIndex = routes.indexOf(location.pathname);
@@ -253,12 +262,11 @@ const Index = () => {
 
   // Memoize scroll handler
   const handleScroll = useCallback(
-    (instance) => {
-      const isMoving = Math.abs(instance.velocity) > 0.5;
+    (lenis: Lenis) => {
+      const isMoving = Math.abs(lenis?.scroll || 0) > 0.5; // Use 'scroll' property
       setIsScrolling(isMoving);
       setScrolling(isMoving);
-    },
-    [setScrolling]
+    },    [setScrolling]
   );
 
   return (
@@ -301,7 +309,9 @@ const Index = () => {
                 <Suspense
                   fallback={
                     <div className="flex items-center justify-center min-h-screen">
-                      <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                      <div
+                        className={`w-8 h-8 border-4 border-${accent}-500 border-t-transparent rounded-full animate-spin`}
+                      ></div>
                     </div>
                   }
                 >
@@ -373,11 +383,16 @@ const Index = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Accent-colored decorative elements */}
+        <div className="fixed bottom-4 right-4 z-10 opacity-30 pointer-events-none">
+          <div
+            className={`w-24 h-24 rounded-full blur-xl`}
+            style={{ backgroundColor: `var(--${accent}-500)` }}
+          />
+        </div>
       </div>
     </>
   );
-};
-
-// Use memo to prevent unnecessary re-renders of the entire component
+};// Use memo to prevent unnecessary re-renders of the entire component
 export default React.memo(Index);
-

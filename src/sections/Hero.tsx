@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   motion,
@@ -25,8 +25,8 @@ import {
 import { useTheme } from "@/contexts/ThemeContext";
 
 // 3D Text component that displays your name
-const FloatingName = ({ text, isHovered }) => {
-  const textRef = useRef(null);
+const FloatingName = ({ text, isHovered }: { text: string, isHovered: boolean }) => {
+  const textRef = useRef<THREE.Mesh | null>(null);
   const { viewport } = useThree();
 
   useFrame((state) => {
@@ -58,11 +58,11 @@ const FloatingName = ({ text, isHovered }) => {
     </Text>
   );
 };
-
 // Interactive 3D sphere that reacts to mouse movement
-const InteractiveSphere = ({ mousePosition, isHovered, onClick }) => {
+const InteractiveSphere = ({ mousePosition, isHovered, onClick }: { mousePosition: [number, number] | null, isHovered: boolean, onClick: () => void }) => {
   const meshRef = useRef(null);
-  const [position, setPosition] = useState([0, 0, -2]);
+
+  const [position, setPosition] = useState<[number, number, number]>([0, 0, -2]);
 
   useFrame(() => {
     if (!meshRef.current || !mousePosition) return;
@@ -95,15 +95,16 @@ const InteractiveSphere = ({ mousePosition, isHovered, onClick }) => {
       />
     </Sphere>
   );
-};
 
-// Grid floor for the 3D scene
+};// Grid floor for the 3D scene
 const GridFloor = () => {
-  const gridTexture = useTexture("/images/grid.png", (texture) => {
-    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-  }, () => {
-    console.error("Failed to load grid texture");
-  });
+  const gridTexture = useTexture("/images/grid.png");
+
+  useEffect(() => {
+    if (gridTexture) {
+      gridTexture.wrapS = gridTexture.wrapT = THREE.RepeatWrapping;
+    }
+  }, [gridTexture]);
 
   return (
     <Plane
@@ -122,9 +123,8 @@ const GridFloor = () => {
     </Plane>
   );
 };
-
 // Post-processing effects for the 3D scene
-const Effects = ({ isHovered }) => {
+const Effects = ({ isHovered }: { isHovered: boolean }) => {
   return (
     <EffectComposer>
       <Bloom
@@ -141,7 +141,7 @@ const Effects = ({ isHovered }) => {
 
 // Floating particles in the background
 const Particles = () => {
-  const particlesRef = useRef(null);
+  const particlesRef = useRef<THREE.Points>(null);
   const count = 100;
   const positions = new Float32Array(count * 3);
   const sizes = new Float32Array(count);
@@ -175,12 +175,14 @@ const Particles = () => {
       <bufferGeometry ref={particlesRef}>
         <bufferAttribute
           attach="attributes-position"
+          args={[positions, 3]}
           count={count}
           array={positions}
           itemSize={3}
         />
         <bufferAttribute
           attach="attributes-size"
+          args={[sizes, 1]}
           count={count}
           array={sizes}
           itemSize={1}
@@ -197,12 +199,11 @@ const Particles = () => {
     </points>
   );
 };
-
 // Main Hero component
 const Hero = () => {
   const [isHovered, setIsHovered] = useState(false);
-  const [mousePosition, setMousePosition] = useState([0, 0]);
-  const { theme } = useTheme();
+  const [mousePosition, setMousePosition] = useState<[number, number]>([0, 0]);
+  useTheme(); // Call useTheme without destructuring if no variables are used
   const navigate = useNavigate();
 
   // Mouse tracking for 3D effect
@@ -215,15 +216,14 @@ const Hero = () => {
 
   useEffect(() => {
     // Mouse move handler
-    const handleMouseMove = (e) => {
-      const x = e.clientX - window.innerWidth / 2;
-      const y = e.clientY - window.innerHeight / 2;
+        const handleMouseMove = (e: MouseEvent) => {
+          const x = e.clientX - window.innerWidth / 2;
+          const y = e.clientY - window.innerHeight / 2;
 
-      mouseX.set(x);
-      mouseY.set(y);
-      setMousePosition([x / window.innerWidth, y / window.innerHeight]);
-    };
-
+          mouseX.set(x);
+          mouseY.set(y);
+          setMousePosition([x / window.innerWidth, y / window.innerHeight]);
+        };
     window.addEventListener("mousemove", handleMouseMove);
 
     return () => {
@@ -431,14 +431,14 @@ const Hero = () => {
               className="grid grid-cols-3 md:grid-cols-6 gap-6"
               variants={containerVariants}
             >
-              {[
+                {[
                 { name: "React", icon: "/icons/react.svg" },
                 { name: "Three.js", icon: "/icons/threejs.svg" },
                 { name: "TypeScript", icon: "/icons/typescript.svg" },
                 { name: "Tailwind", icon: "/icons/tailwind.svg" },
                 { name: "WebGL", icon: "/icons/webgl.svg" },
                 { name: "Blender", icon: "/icons/blender.svg" },
-              ].map((tech, index) => (
+                ].map((tech) => (
                 <motion.div
                   key={tech.name}
                   className="flex flex-col items-center"
@@ -446,24 +446,24 @@ const Hero = () => {
                   whileHover={{ scale: 1.1, y: -5 }}
                 >
                   <motion.div
-                    className="w-12 h-12 md:w-16 md:h-16 bg-gray-800/50 rounded-xl p-3 flex items-center justify-center
-                              border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300"
-                    whileHover={{
-                      boxShadow: "0 0 15px rgba(139, 92, 246, 0.5)",
-                      borderColor: "rgba(139, 92, 246, 0.5)",
-                    }}
+                  className="w-12 h-12 md:w-16 md:h-16 bg-gray-800/50 rounded-xl p-3 flex items-center justify-center
+                        border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300"
+                  whileHover={{
+                    boxShadow: "0 0 15px rgba(139, 92, 246, 0.5)",
+                    borderColor: "rgba(139, 92, 246, 0.5)",
+                  }}
                   >
-                    <img
-                      src={tech.icon}
-                      alt={tech.name}
-                      className="w-full h-full object-contain"
-                    />
+                  <img
+                    src={tech.icon}
+                    alt={tech.name}
+                    className="w-full h-full object-contain"
+                  />
                   </motion.div>
                   <span className="text-xs text-gray-400 mt-2">
-                    {tech.name}
+                  {tech.name}
                   </span>
                 </motion.div>
-              ))}
+                ))}
             </motion.div>
           </motion.div>
         </motion.div>

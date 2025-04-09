@@ -44,7 +44,7 @@ const ContactForm = () => {
     },
   });
 
-  const onSubmit = async (data: ContactFormData) => {
+  const onSubmit = async () => {
     setFormState((prev) => ({
       ...prev,
       isSubmitting: true,

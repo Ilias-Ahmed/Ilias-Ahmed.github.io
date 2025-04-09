@@ -143,7 +143,7 @@ const NavigationHelp = ({ initialTab = "menu" }: NavigationHelpProps) => {
       </motion.button>
 
       {/* Help Dialog */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {isOpen && (
           <motion.div
             className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-0"
