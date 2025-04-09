@@ -2,10 +2,10 @@ import { certifications, timelineData } from "@/components/about/aboutData";
 import CertificationsGallery from "@/components/about/CertificationsGallery";
 import ExperienceTimeline from "@/components/about/ExperienceTimeline";
 import ProfileCard from "@/components/about/ProfileCard";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSpring } from "@react-spring/web";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useSpring, animated } from "@react-spring/web";
 import { AnimatePresence, motion, useInView } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { toast } from "sonner";
 
 const AboutSection = () => {
@@ -15,23 +15,31 @@ const AboutSection = () => {
   const [scrollY, setScrollY] = useState(0);
 
   // Parallax effect for background elements
-  const [{ offset }, api] = useSpring(() => ({ offset: 0 }));
+  const [{ offset }, api] = useSpring(() => ({ offset: [0, 0] }));
 
-  // Track scroll position for parallax effects
-  useEffect(() => {
-    const handleScroll = () => {
+  // Track scroll position for parallax effects - improved with useCallback
+  const handleScroll = useCallback(() => {
+    if (typeof window !== "undefined") {
       setScrollY(window.scrollY);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    }
   }, []);
 
-  const handleMouseMove = (e) => {
-    const x = (e.clientX / window.innerWidth) * 2 - 1;
-    const y = (e.clientY / window.innerHeight) * 2 - 1;
-    api.start({ offset: [x * 15, y * 15] });
-  };
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  // Improved mouse move handler with validation
+  const handleMouseMove = useCallback(
+    (e) => {
+      if (!e) return;
+
+      const x = (e.clientX / window.innerWidth) * 2 - 1;
+      const y = (e.clientY / window.innerHeight) * 2 - 1;
+      api.start({ offset: [x * 15, y * 15] });
+    },
+    [api]
+  );
 
   // Animation variants
   const containerVariants = {
@@ -54,33 +62,64 @@ const AboutSection = () => {
     },
   };
 
+  // Handle Easter egg click with error handling
+  const handleEasterEggClick = useCallback(() => {
+    try {
+      toast("Easter Egg Found!", {
+        description: "You've discovered a hidden feature!",
+        action: {
+          label: "Explore",
+          onClick: () =>
+            window.open("https://github.com/Ilias-Ahmed", "_blank"),
+        },
+        icon: "🎉",
+      });
+    } catch (error) {
+      console.error("Toast notification failed:", error);
+    }
+  }, []);
+
   return (
-    <div
+    <section
       className="py-16 md:py-32 relative overflow-hidden"
       id="about"
       onMouseMove={handleMouseMove}
+      aria-label="About Section"
     >
-      {/* Floating gradient orbs */}
-      <div
+      {/* Floating gradient orbs with mouse parallax effect */}
+      <animated.div
         className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-primary/10 blur-[100px] opacity-60"
         style={{
-          transform: `translate(${scrollY * 0.05}px, ${-scrollY * 0.02}px)`,
-          transition: "transform 0.1s ease-out",
+          transform: offset.to(
+            (x, y) =>
+              `translate(${scrollY * 0.05 + x}px, ${-scrollY * 0.02 + y}px)`
+          ),
         }}
+        aria-hidden="true"
       />
-      <div
+      <animated.div
         className="absolute bottom-1/3 right-1/4 w-80 h-80 rounded-full bg-purple-500/10 blur-[120px] opacity-50"
         style={{
-          transform: `translate(${-scrollY * 0.03}px, ${scrollY * 0.04}px)`,
-          transition: "transform 0.1s ease-out",
+          transform: offset.to(
+            (x, y) =>
+              `translate(${-scrollY * 0.03 - x * 0.8}px, ${
+                scrollY * 0.04 - y * 0.8
+              }px)`
+          ),
         }}
+        aria-hidden="true"
       />
-      <div
+      <animated.div
         className="absolute top-2/3 right-1/3 w-48 h-48 rounded-full bg-blue-500/10 blur-[80px] opacity-60"
         style={{
-          transform: `translate(${scrollY * 0.02}px, ${-scrollY * 0.05}px)`,
-          transition: "transform 0.1s ease-out",
+          transform: offset.to(
+            (x, y) =>
+              `translate(${scrollY * 0.02 + x * 1.2}px, ${
+                -scrollY * 0.05 + y * 1.2
+              }px)`
+          ),
         }}
+        aria-hidden="true"
       />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
@@ -105,38 +144,42 @@ const AboutSection = () => {
           </motion.p>
         </motion.div>
 
-        {/* Interactive Tabs */}
+        {/* Interactive Tabs - Improved with proper TabsContent */}
         <Tabs
           defaultValue="profile"
           value={activeTab}
           onValueChange={setActiveTab}
           className="mb-20"
         >
-          <TabsList className="grid grid-cols-2 max-w-md mx-auto mb-16">
+          <TabsList className="flex gap-4 max-w-md mx-auto mb-16 p-1 bg-gray-800/40 backdrop-blur-lg rounded-xl border border-gray-700/50 shadow-xl">
             <TabsTrigger
               value="profile"
-              className="data-[state=active]:bg-primary/20 data-[state=active]:border-primary/30 border border-transparent transition-all duration-300"
+              className="flex-1 px-6 py-3 rounded-lg data-[state=active]:bg-gradient-to-br data-[state=active]:from-primary/80 data-[state=active]:to-purple-600/80 data-[state=active]:shadow-lg data-[state=active]:shadow-primary/20 data-[state=active]:border-none data-[state=active]:text-white border border-gray-700/30 transition-all duration-300"
             >
               <motion.span
-                className="flex flex-col items-center gap-2 py-1"
-                whileHover={{ y: -2 }}
-                whileTap={{ y: 1 }}
+                className="flex items-center justify-center gap-3"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <span className="text-xl mb-1">👤</span>
-                <span>Profile</span>
+                <span className="text-lg" aria-hidden="true">
+                  👤
+                </span>
+                <span className="font-medium">Profile</span>
               </motion.span>
             </TabsTrigger>
             <TabsTrigger
               value="experience"
-              className="data-[state=active]:bg-primary/20 data-[state=active]:border-primary/30 border border-transparent transition-all duration-300"
+              className="flex-1 px-6 py-3 rounded-lg data-[state=active]:bg-gradient-to-br data-[state=active]:from-primary/80 data-[state=active]:to-purple-600/80 data-[state=active]:shadow-lg data-[state=active]:shadow-primary/20 data-[state=active]:border-none data-[state=active]:text-white border border-gray-700/30 transition-all duration-300"
             >
               <motion.span
-                className="flex flex-col items-center gap-2 py-1"
-                whileHover={{ y: -2 }}
-                whileTap={{ y: 1 }}
+                className="flex items-center justify-center gap-3"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <span className="text-xl mb-1">🚀</span>
-                <span>Experience</span>
+                <span className="text-lg" aria-hidden="true">
+                  🚀
+                </span>
+                <span className="font-medium">Experience</span>
               </motion.span>
             </TabsTrigger>
           </TabsList>
@@ -179,31 +222,34 @@ const AboutSection = () => {
           </motion.div>
         </motion.div>
 
-        {/* Interactive Easter Egg */}
+        {/* Interactive Easter Egg - Improved with accessibility */}
         <motion.div
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.98 }}
           className="text-center cursor-pointer p-6 mt-20 opacity-60 hover:opacity-100 transition-opacity"
-          onClick={() => {
-            toast("Easter Egg Found!", {
-              description: "You've discovered a hidden feature!",
-              action: {
-                label: "Explore",
-                onClick: () =>
-                  window.open("https://github.com/Ilias-Ahmed", "_blank"),
-              },
-              icon: "🎉",
-            });
+          onClick={handleEasterEggClick}
+          role="button"
+          tabIndex={0}
+          aria-label="Discover Easter Egg"
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              handleEasterEggClick();
+            }
           }}
         >
           <p className="text-sm text-gray-500 flex items-center justify-center gap-2">
-            <span className="animate-pulse">✨</span>
-            <span>There's more than meets the eye...</span>
-            <span className="animate-pulse">✨</span>
+            <span className="animate-pulse" aria-hidden="true">
+              ✨
+            </span>
+            <span>There&apos;s more than meets the eye...</span>
+            <span className="animate-pulse" aria-hidden="true">
+              ✨
+            </span>
           </p>
         </motion.div>
       </div>
-    </div>
+    </section>
   );
 };
 
