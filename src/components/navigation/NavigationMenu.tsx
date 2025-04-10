@@ -616,61 +616,6 @@ const NavigationMenu = ({ currentPath }: NavigationMenuProps) => {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Floating navigation indicator when menu is closed */}
-      <AnimatePresence>
-        {!isOpen && (
-          <motion.div
-            className={`fixed bottom-8 left-1/2 transform -translate-x-1/2 z-30 px-6 py-3 rounded-full backdrop-blur-md
-              ${isDark ? 'bg-gray-900/70' : 'bg-white/70'} border border-${accent}-500/30
-              shadow-lg`}
-            initial={{ y: 100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 100, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 300, damping: 25 }}
-            style={{
-              boxShadow: `0 5px 20px ${isDark ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.1)'}, 0 0 10px ${isDark ? `rgba(139,92,246,0.3)` : `rgba(139,92,246,0.2)`}`,
-              transform: `${perspective} translateX(-50%)`,
-            }}
-          >
-            <div className="flex space-x-4">
-              {navItems.map((item) => (
-                <motion.button
-                  key={item.path}
-                  onClick={() => handleNavigation(item.path)}
-                  className={`relative p-2 rounded-full transition-all duration-300
-                    ${currentPath === item.path
-                      ? `text-${accent}-${isDark ? '400' : '500'}`
-                      : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-900'
-                    }`}
-                  whileHover={{ scale: 1.2, y: -5 }}
-                  whileTap={{ scale: 0.9 }}
-                  data-cursor-hover="true"
-                >
-                  <span className="text-xl">{item.icon}</span>
-
-                  {/* Active indicator dot */}
-                  {currentPath === item.path && (
-                    <motion.div
-                      className={`absolute -bottom-1 left-1/2 w-1.5 h-1.5 rounded-full bg-${accent}-500`}
-                      layoutId="navDotIndicator"
-                      style={{ x: '-50%' }}
-                      animate={{
-                        scale: mode === "creative" ? [1, 1.5, 1] : 1
-                      }}
-                      transition={{
-                        duration: 1.5,
-                        repeat: mode === "creative" ? Infinity : 0,
-                        repeatType: "reverse"
-                      }}
-                    />
-                  )}
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </>
   );
 };

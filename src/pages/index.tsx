@@ -131,7 +131,11 @@ const Index = () => {
         (section) => section.id === activeSection
       )?.route;
 
-      if (sectionRoute && sectionRoute !== location.pathname) {
+      if (
+        sectionRoute &&
+        sectionRoute !== location.pathname &&
+        routes.includes(location.pathname)
+      ) {
         navigate(sectionRoute, { replace: true });
       }
     }
@@ -142,6 +146,7 @@ const Index = () => {
     navigate,
     location.pathname,
     sections,
+    routes,
   ]);
 
   useEffect(handleScrollNavigation, [handleScrollNavigation]);

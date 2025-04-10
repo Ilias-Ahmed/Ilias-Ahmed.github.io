@@ -3,9 +3,6 @@ import { useLocation, Link } from "react-router-dom";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import { AugmentedRealityOverlay, BiometricScanner, CyberneticCountdown, DNAAuthentication, HolographicTerminal, NeuralNetworkVisualization, Scene3D } from "@/components/notFound";
 
-// Import all the components
-
-
 const NotFound: React.FC = () => {
   const location = useLocation();
   const [count, setCount] = useState(5);
@@ -16,6 +13,7 @@ const NotFound: React.FC = () => {
   const [mousePosition, setMousePosition] = useState<[number, number] | null>(
     null
   );
+  const [showFallback, setShowFallback] = useState(false);
 
   // Mouse tracking for 3D effect
   const mouseX = useMotionValue(0);
@@ -37,60 +35,66 @@ const NotFound: React.FC = () => {
   });
 
   useEffect(() => {
-    // Log error for analytics
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
+    // Try to catch any errors with Three.js
+    try {
+      // Log error for analytics
+      console.error(
+        "404 Error: User attempted to access non-existent route:",
+        location.pathname
+      );
 
-    // Mouse move handler
-    const handleMouseMove = (e: MouseEvent) => {
-      const x = e.clientX - window.innerWidth / 2;
-      const y = e.clientY - window.innerHeight / 2;
+      // Mouse move handler
+      const handleMouseMove = (e: MouseEvent) => {
+        const x = e.clientX - window.innerWidth / 2;
+        const y = e.clientY - window.innerHeight / 2;
 
-      mouseX.set(x);
-      mouseY.set(y);
-      setMousePosition([x / window.innerWidth, y / window.innerHeight]);
-    };
+        mouseX.set(x);
+        mouseY.set(y);
+        setMousePosition([x / window.innerWidth, y / window.innerHeight]);
+      };
 
-    window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("mousemove", handleMouseMove);
 
-    // Countdown timer WITHOUT auto-redirect
-    timersRef.current.countdown = setInterval(() => {
-      setCount((prevCount) => {
-        if (prevCount <= 1) {
-          if (timersRef.current.countdown) {
-            clearInterval(timersRef.current.countdown);
+      // Countdown timer WITHOUT auto-redirect
+      timersRef.current.countdown = setInterval(() => {
+        setCount((prevCount) => {
+          if (prevCount <= 1) {
+            if (timersRef.current.countdown) {
+              clearInterval(timersRef.current.countdown);
+            }
+            // No navigation here - removed the auto-redirect
+            return 0;
           }
-          // No navigation here - removed the auto-redirect
-          return 0;
-        }
-        return prevCount - 1;
-      });
-    }, 1000);
+          return prevCount - 1;
+        });
+      }, 1000);
 
-    // Random glitch effect
-    timersRef.current.glitch = setInterval(() => {
-      setIsGlitching(true);
-      setTimeout(() => setIsGlitching(false), 200);
-    }, 3000);
+      // Random glitch effect
+      timersRef.current.glitch = setInterval(() => {
+        setIsGlitching(true);
+        setTimeout(() => setIsGlitching(false), 200);
+      }, 3000);
 
-    // Show emergency protocol after delay
-    timersRef.current.emergency = setTimeout(() => {
-      setShowEmergencyProtocol(true);
-    }, 2000);
+      // Show emergency protocol after delay
+      timersRef.current.emergency = setTimeout(() => {
+        setShowEmergencyProtocol(true);
+      }, 2000);
 
-    // Cleanup function
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
+      // Cleanup function
+      return () => {
+        window.removeEventListener("mousemove", handleMouseMove);
 
-      // Clear all timers
-      if (timersRef.current.countdown)
-        clearInterval(timersRef.current.countdown);
-      if (timersRef.current.glitch) clearInterval(timersRef.current.glitch);
-      if (timersRef.current.emergency)
-        clearTimeout(timersRef.current.emergency);
-    };
+        // Clear all timers
+        if (timersRef.current.countdown)
+          clearInterval(timersRef.current.countdown);
+        if (timersRef.current.glitch) clearInterval(timersRef.current.glitch);
+        if (timersRef.current.emergency)
+          clearTimeout(timersRef.current.emergency);
+      };
+    } catch (error) {
+      console.error("Error in NotFound component:", error);
+      setShowFallback(true);
+    }
   }, [location.pathname, mouseX, mouseY]);
 
   // Animation variants
@@ -113,6 +117,59 @@ const NotFound: React.FC = () => {
     },
   };
 
+  // Fallback simple 404 page if there are errors with Three.js
+  if (showFallback) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-md w-full bg-gray-800/80 backdrop-blur-lg p-8 rounded-xl border border-purple-500/30 shadow-xl"
+        >
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-white mb-2">
+              Page Not Found
+            </h1>
+            <div className="w-20 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto mb-6"></div>
+
+            <p className="text-gray-300 mb-6">
+              The page you're looking for doesn't exist or has been moved to
+              another location.
+            </p>
+
+            <div className="text-sm text-pink-400 font-mono mb-8 p-2 bg-black/30 rounded border border-pink-500/20 inline-block">
+              ERROR 404: {location.pathname}
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <Link to="/">
+              <motion.button
+                className="w-full sm:w-auto px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg
+                          shadow-lg hover:shadow-xl transition-all duration-300"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Return to Home
+              </motion.button>
+            </Link>
+
+            <motion.button
+              className="w-full sm:w-auto px-6 py-2 bg-transparent text-purple-400 font-medium rounded-lg
+                        border border-purple-500/30 hover:border-purple-500/70 transition-all duration-300"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => window.history.back()}
+            >
+              Go Back
+            </motion.button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 via-purple-900/20 to-black overflow-hidden relative">
       {/* Neural Network Background */}
@@ -120,7 +177,10 @@ const NotFound: React.FC = () => {
 
       {/* 3D Scene */}
       <div className="absolute inset-0 z-0">
-        <Scene3D isGlitching={isGlitching} mousePosition={mousePosition} />
+        {/* Wrap in error boundary */}
+        <ErrorCatcher>
+          <Scene3D isGlitching={isGlitching} mousePosition={mousePosition} />
+        </ErrorCatcher>
       </div>
 
       {/* Augmented Reality Overlay */}
@@ -470,6 +530,28 @@ const NotFound: React.FC = () => {
       </div>
     </div>
   );
+};
+
+// Simple error catcher component
+const ErrorCatcher: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const handleError = () => {
+      setHasError(true);
+    };
+
+    window.addEventListener("error", handleError);
+    return () => window.removeEventListener("error", handleError);
+  }, []);
+
+  if (hasError) {
+    return null;
+  }
+
+  return <>{children}</>;
 };
 
 export default NotFound;

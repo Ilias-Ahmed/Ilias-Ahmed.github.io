@@ -2,10 +2,12 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { ArrowRight, Download, Github, Linkedin, Twitter } from "lucide-react";
 import profileImage from "../../assets/images/profile.png";
+import ResumeViewer from "../ui/ResumeViewer";
 
 const ProfileCard = () => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [showResume, setShowResume] = useState(false);
 
   useEffect(() => {
     // Trigger animations after component mounts
@@ -34,15 +36,17 @@ const ProfileCard = () => {
     },
   };
 
-  const skills = [
-    "React", "Node.js", "TypeScript", "GraphQL", "AWS", "UI/UX"
-  ];
+  const skills = ["React", "Node.js", "TypeScript", "GraphQL", "AWS", "UI/UX"];
 
   const quickFacts = [
     { icon: "🌍", title: "Location", content: "San Francisco, CA" },
     { icon: "🎓", title: "Education", content: "Computer Science, Stanford" },
     { icon: "🌱", title: "Learning", content: "AI/ML & Cloud Architecture" },
-    { icon: "🎯", title: "Goal", content: "Building impactful products that solve real problems" }
+    {
+      icon: "🎯",
+      title: "Goal",
+      content: "Building impactful products that solve real problems",
+    },
   ];
 
   const stats = [
@@ -64,21 +68,26 @@ const ProfileCard = () => {
           className="relative mx-auto max-w-md w-full"
         >
           {/* Background decorative elements */}
-          <div className="absolute -z-10 -top-10 -left-10 w-[120%] h-[120%] bg-gradient-to-br from-primary/10 to-purple-500/5 rounded-full blur-[60px]" />
-          <div className="absolute -z-10 bottom-10 right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-[50px]" />
+          <div className="absolute -z-10 -top-10 -left-10 w-full h-full bg-gradient-to-br from-primary/10 to-purple-500/5 rounded-full blur-lg" />
+          <div className="absolute -z-10 bottom-10 right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-md" />
 
           {/* Card with flip effect */}
           <div
-            className="relative w-full h-[450px] perspective-1000 cursor-pointer"
+            className="relative w-full h-[450px] perspective-3d cursor-pointer"
             onClick={() => setIsFlipped(!isFlipped)}
+            style={{ perspective: "1000px" }}
           >
             <motion.div
-              className="relative w-full h-full preserve-3d transition-all duration-700 rounded-2xl"
+              className="relative w-full h-full transition-all duration-700 rounded-2xl"
               animate={{ rotateY: isFlipped ? 180 : 0 }}
               transition={{ duration: 0.7, type: "spring", damping: 20 }}
+              style={{ transformStyle: "preserve-3d" }}
             >
               {/* Front - Profile Image */}
-              <div className="absolute inset-0 backface-hidden rounded-2xl overflow-hidden">
+              <div
+                className="absolute inset-0 rounded-2xl overflow-hidden"
+                style={{ backfaceVisibility: "hidden" }}
+              >
                 <div className="relative h-full w-full">
                   {/* Profile image */}
                   <img
@@ -130,7 +139,13 @@ const ProfileCard = () => {
               </div>
 
               {/* Back - Quick Facts */}
-              <div className="absolute inset-0 backface-hidden rotateY-180 rounded-2xl overflow-hidden">
+              <div
+                className="absolute inset-0 rounded-2xl overflow-hidden"
+                style={{
+                  backfaceVisibility: "hidden",
+                  transform: "rotateY(180deg)",
+                }}
+              >
                 <div className="h-full w-full bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md border border-white/10 shadow-xl p-8 flex flex-col">
                   <h4 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
                     <span className="w-2 h-2 bg-primary rounded-full"></span>
@@ -261,16 +276,15 @@ const ProfileCard = () => {
               <ArrowRight size={18} />
             </motion.a>
 
-            <motion.a
-              href="/resume.pdf"
-              target="_blank"
+            <motion.button
+              onClick={() => setShowResume(true)}
               className="px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-full flex items-center gap-2 transition-all"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
             >
               <span>Resume</span>
               <Download size={18} />
-            </motion.a>
+            </motion.button>
           </motion.div>
         </motion.div>
       </div>
@@ -303,6 +317,12 @@ const ProfileCard = () => {
           </motion.div>
         ))}
       </motion.div>
+
+      {/* Resume Viewer Modal */}
+      <ResumeViewer
+        isOpen={showResume}
+        onClose={() => setShowResume(false)}
+      />
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
 import FloatingErrorCode from "./FloatingErrorCode";
@@ -23,14 +23,16 @@ const Scene3D: React.FC<Scene3DProps> = ({ isGlitching, mousePosition }) => {
           intensity={0.5}
         />
 
-        <FloatingErrorCode isGlitching={isGlitching} />
-        <ReactiveDistortSphere
-          mousePosition={mousePosition}
-          isGlitching={isGlitching}
-        />
-        <DigitalGrid />
-        <Environment preset="city" />
-        <Effects isGlitching={isGlitching} />
+        <Suspense fallback={null}>
+          <FloatingErrorCode isGlitching={isGlitching} />
+          <ReactiveDistortSphere
+            mousePosition={mousePosition}
+            isGlitching={isGlitching}
+          />
+          <DigitalGrid />
+          <Environment preset="city" />
+          <Effects isGlitching={isGlitching} />
+        </Suspense>
       </Canvas>
     );
   } catch (error) {
