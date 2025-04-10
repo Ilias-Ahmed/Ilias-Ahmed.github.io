@@ -1,7 +1,11 @@
-import { Suspense, useMemo } from "react";
-import { Canvas } from "@react-three/fiber";
-import { Environment, Loader } from "@react-three/drei";
-import ParticleField from "../ParticleField";
+import { useRef, useMemo, useEffect, memo } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
+import { useHeroStore } from "@/hooks/useHero";
+import { useTheme } from "@/contexts/ThemeContext";
+import { ParticleField } from "@/components/ParticleField";
+import { EffectComposer, Bloom, Vignette } from "@react-three/postprocessing";
+import * as THREE from "three";
+import BackgroundParticles from "./BackgroundParticles";
 
 interface ThreeJSBackgroundProps {
   theme: string;
@@ -11,118 +15,176 @@ interface ThreeJSBackgroundProps {
   y: { get: () => number };
 }
 
-// Scene content component
-function SceneContent({
+// Camera controller to handle mouse movement
+const CameraController = ({
+  x,
+  y,
+}: {
+  x: { get: () => number };
+  y: { get: () => number };
+}) => {
+  const { camera } = useThree();
+
+  useEffect(() => {
+    const handleMouseMove = () => {
+      // Apply subtle camera movement based on mouse position
+      camera.position.x = x.get() * 0.5;
+      camera.position.y = y.get() * 0.5;
+    };
+
+    // Set up animation frame
+    let frameId: number;
+    const animate = () => {
+      handleMouseMove();
+      frameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      cancelAnimationFrame(frameId);
+    };
+  }, [camera, x, y]);
+
+  return null;
+};
+
+// Post-processing effects component
+const PostProcessingEffects = memo(
+  ({ enabled, theme }: { enabled: boolean; theme: string }) => {
+    if (!enabled) return null;
+
+    return (
+      <EffectComposer>
+        <Bloom
+          luminanceThreshold={0.2}
+          luminanceSmoothing={0.9}
+          intensity={0.8}
+        />
+        <Vignette
+          eskil={false}
+          offset={0.1}
+          darkness={theme === "dark" ? 0.7 : 0.5}
+        />
+      </EffectComposer>
+    );
+  }
+);
+
+const ThreeJSBackground = ({
   theme,
   mode,
   performanceLevel,
   x,
   y,
-}: ThreeJSBackgroundProps) {
-  // Configure particle density based on performance
+}: ThreeJSBackgroundProps) => {
+  const { enableParticles, enablePostProcessing } = useHeroStore();
+  const { accent } = useTheme();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Properly memoize the offset vector to prevent unnecessary recreations
+  const offsetVector = useMemo(() => new THREE.Vector3(), []);
+
+  useEffect(() => {
+    // Update offset vector when x or y changes
+    offsetVector.set(x.get(), y.get(), 0);
+  }, [offsetVector, x, y]);
+
+  // Get accent color based on theme and accent
+  const accentColors = useMemo(() => {
+    const colors = {
+      purple: { primary: "#8B5CF6", secondary: "#C4B5FD" },
+      blue: { primary: "#3B82F6", secondary: "#93C5FD" },
+      green: { primary: "#10B981", secondary: "#6EE7B7" },
+      amber: { primary: "#F59E0B", secondary: "#FCD34D" },
+      pink: { primary: "#EC4899", secondary: "#F9A8D4" },
+    };
+
+    // Mode-specific colors
+    const modeColors = {
+      developer: { primary: "#3080ff", secondary: "#93C5FD" },
+      designer: { primary: "#ff3080", secondary: "#F9A8D4" },
+      creative: { primary: "#8B5CF6", secondary: "#C4B5FD" },
+    };
+
+    // Use mode-specific colors if available, otherwise use accent colors
+    if (Object.prototype.hasOwnProperty.call(modeColors, mode)) {
+      return modeColors[mode as keyof typeof modeColors];
+    }
+
+    return accent in colors
+      ? colors[accent as keyof typeof colors]
+      : colors.purple;
+  }, [accent, mode]);
+
+  // Memoize particle density to prevent recalculation
   const particleDensity = useMemo(() => {
-    if (performanceLevel === "high") return 2500;
-    if (performanceLevel === "medium") return 1500;
-    return 800; // Low performance
+    switch (performanceLevel) {
+      case "high":
+        return 3000;
+      case "medium":
+        return 1500;
+      case "low":
+        return 800;
+      default:
+        return 1500;
+    }
   }, [performanceLevel]);
 
-  // Determine color based on mode
-  const lightColor = useMemo(() => {
-    switch (mode) {
-      case "developer":
-        return "#3080ff";
-      case "designer":
-        return "#ff3080";
-      default:
-        return "#8B5CF6";
-    }
-  }, [mode]);
+  // If particles are disabled, return early
+  if (!enableParticles) {
+    return null;
+  }
 
   return (
-    <>
-      {/* Ambient light for the scene */}
-      <ambientLight intensity={theme === "dark" ? 0.3 : 0.5} />
+    <div className="absolute inset-0 w-full h-full">
+      <Canvas
+        ref={canvasRef}
+        camera={{ position: [0, 0, 10], fov: 75 }}
+        dpr={[1, performanceLevel === "low" ? 1 : 2]}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          pointerEvents: "none",
+        }}
+      >
+        <CameraController x={x} y={y} />
+        <ambientLight intensity={0.5} />
+        <fog
+          attach="fog"
+          args={[theme === "dark" ? "#000000" : "#ffffff", 15, 30]}
+        />
 
-      {/* Subtle directional light */}
-      <directionalLight
-        position={[10, 10, 5]}
-        intensity={theme === "dark" ? 0.5 : 0.7}
-        color={lightColor}
-      />
+        {/* Use the appropriate particle system based on performance level */}
+        {performanceLevel === "low" ? (
+          <BackgroundParticles
+            offset={offsetVector}
+            interactionIntensity={0.2}
+            density={particleDensity * 0.5}
+            primaryColor={accentColors.primary}
+            secondaryColor={accentColors.secondary}
+          />
+        ) : (
+          <ParticleField
+            offset={{ get: () => [offsetVector.x, offsetVector.y] }}
+            density={particleDensity}
+            noiseIntensity={mode === "creative" ? 0.12 : 0.08}
+            waveSpeed={mode === "creative" ? 0.8 : 0.5}
+            interactionStrength={mode === "creative" ? 0.5 : 0.3}
+            primaryColor={accentColors.primary}
+            secondaryColor={accentColors.secondary}
+          />
+        )}
 
-      {/* Environment for reflections - only on medium/high */}
-      {performanceLevel !== "low" && (
-        <Environment preset={theme === "dark" ? "night" : "city"} />
-      )}
-
-      {/* Main particle field */}
-      <ParticleField
-        offset={{ get: () => [x.get(), y.get()] }}
-        density={particleDensity}
-        interactionRadius={performanceLevel === "high" ? 3.0 : 2.0}
-        interactionStrength={performanceLevel === "high" ? 0.5 : 0.3}
-        noiseIntensity={performanceLevel === "high" ? 0.08 : 0.05}
-        waveSpeed={performanceLevel === "high" ? 0.5 : 0.3}
-      />
-    </>
-  );
-}
-
-const ThreeJSBackground = (props: ThreeJSBackgroundProps) => {
-  const { performanceLevel, theme } = props;
-
-  // Memoize canvas props to prevent unnecessary re-renders
-  const canvasProps = useMemo(
-    () => ({
-      camera: { position: [0, 0, 15], fov: 50 },
-      dpr: [
-        1,
-        performanceLevel === "high"
-          ? 2
-          : performanceLevel === "medium"
-          ? 1.5
-          : 1,
-      ],
-      gl: {
-        antialias: performanceLevel !== "low",
-        alpha: true,
-        powerPreference: "high-performance",
-        stencil: false,
-        depth: false,
-      },
-      style: {
-        position: "absolute",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-      },
-    }),
-    [performanceLevel]
-  );
-
-  return (
-    <>
-      <Canvas {...canvasProps}>
-        <Suspense fallback={null}>
-          <SceneContent {...props} />
-        </Suspense>
+        {/* Add post-processing effects if enabled and not on low performance */}
+        {performanceLevel !== "low" && (
+          <PostProcessingEffects enabled={enablePostProcessing} theme={theme} />
+        )}
       </Canvas>
-
-      <Loader
-        containerStyles={{
-          background: "transparent",
-          zIndex: 1000,
-        }}
-        dataInterpolation={(p) => `Loading ${p.toFixed(0)}%`}
-        dataStyles={{
-          color: theme === "dark" ? "#ffffff" : "#000000",
-          fontSize: "0.8rem",
-          fontFamily: "monospace",
-        }}
-      />
-    </>
+    </div>
   );
 };
 
-export default ThreeJSBackground;
+// Add memo to prevent unnecessary re-renders
+export default memo(ThreeJSBackground);

@@ -5,7 +5,6 @@ import * as THREE from "three";
 import { useSpring, animated } from "@react-spring/three";
 import { useTheme } from "@/contexts/ThemeContext";
 import { extend } from "@react-three/fiber";
-
 // Define constants to avoid recreating values
 const DEFAULT_DENSITY = {
   low: 800,
@@ -196,15 +195,18 @@ interface ParticleFieldProps {
   interactionStrength?: number;
   noiseIntensity?: number;
   waveSpeed?: number;
+  primaryColor?: string;
+  secondaryColor?: string;
 }
 
-const ParticleField = ({
+export const ParticleField = ({
   offset,
   density,
-  interactionRadius = 2.0,
   noiseIntensity = 0.08,
   waveSpeed = 0.5,
   interactionStrength = 0.3,
+  primaryColor,
+  secondaryColor,
 }: ParticleFieldProps) => {
   const { theme, accent } = useTheme();
   const { viewport, mouse, size } = useThree();
@@ -249,7 +251,7 @@ const ParticleField = ({
   const mousePos = useMemo(() => new THREE.Vector3(), []);
 
   // Generate particles with additional attributes - only when density changes
-  const [geometry, positions] = useMemo(() => {
+  const geometry = useMemo(() => {
     // Create geometry
     const geometry = new THREE.BufferGeometry();
 
@@ -296,7 +298,7 @@ const ParticleField = ({
     geometry.setAttribute("phase", new THREE.BufferAttribute(phases, 1));
     geometry.setAttribute("lifespan", new THREE.BufferAttribute(lifespans, 1));
 
-    return [geometry, positions];
+    return geometry;
   }, [actualDensity]);
 
   // Get colors based on theme and accent - only recalculate when theme/accent changes
@@ -312,19 +314,27 @@ const ParticleField = ({
     const colorSet =
       accentColors[accent as keyof typeof accentColors] || accentColors.purple;
 
+    // Use provided colors if available
+    const primary =
+      primaryColor ||
+      (theme === "dark" ? colorSet.primary : colorSet.secondary);
+    const secondary =
+      secondaryColor ||
+      (theme === "dark" ? colorSet.secondary : colorSet.primary);
+
     // Adjust colors based on theme
     if (theme === "dark") {
       return {
-        primaryColor: new THREE.Color(colorSet.primary),
-        secondaryColor: new THREE.Color(colorSet.secondary).multiplyScalar(0.7),
+        primaryColor: new THREE.Color(primary),
+        secondaryColor: new THREE.Color(secondary).multiplyScalar(0.7),
       };
     } else {
       return {
-        primaryColor: new THREE.Color(colorSet.secondary),
-        secondaryColor: new THREE.Color(colorSet.primary).multiplyScalar(1.2),
+        primaryColor: new THREE.Color(primary),
+        secondaryColor: new THREE.Color(secondary).multiplyScalar(1.2),
       };
     }
-  }, [theme, accent]);
+  }, [theme, accent, primaryColor, secondaryColor]);
 
   // Spring animation for initial appearance
   const spring = useSpring({
@@ -389,19 +399,16 @@ const ParticleField = ({
     >
       <Points ref={pointsRef} frustumCulled={true}>
         <primitive object={geometry} attach="geometry" />
-        <particleMaterial
+        <primitive
+          object={new ParticleMaterial()}
           ref={materialRef}
+          attach="material"
           transparent={true}
           depthWrite={false}
           blending={THREE.AdditiveBlending}
-          pointSize={isMobile ? 1.2 : performanceLevel === "low" ? 1.5 : 2.0}
-          primaryColor={colors.primaryColor}
-          secondaryColor={colors.secondaryColor}
         />
       </Points>
     </animated.group>
   );
 };
-
-export default ParticleField;
 

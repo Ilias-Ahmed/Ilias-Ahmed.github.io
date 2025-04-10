@@ -25,6 +25,8 @@ const ExperienceTimeline = ({ timelineData }: ExperienceTimelineProps) => {
                 className={`w-full text-left p-4 rounded-lg transition-all ${
                   activeItem === index
                     ? "bg-primary/20 border-l-4 border-primary"
+                    : hoveredItem === index
+                    ? "bg-secondary/50 border-l-2 border-primary/50"
                     : "bg-secondary/30 hover:bg-secondary/50"
                 }`}
                 onClick={() => setActiveItem(index)}
@@ -36,16 +38,32 @@ const ExperienceTimeline = ({ timelineData }: ExperienceTimelineProps) => {
                 <div className="flex justify-between items-center">
                   <span
                     className={`font-medium ${
-                      activeItem === index ? "text-primary" : "text-gray-300"
+                      activeItem === index || hoveredItem === index
+                        ? "text-primary"
+                        : "text-gray-300"
                     }`}
                   >
                     {item.title}
                   </span>
-                  <span className="text-sm px-2 py-1 rounded-full bg-primary/10 text-primary">
+                  <span
+                    className={`text-sm px-2 py-1 rounded-full ${
+                      hoveredItem === index && activeItem !== index
+                        ? "bg-primary/20 text-primary"
+                        : "bg-primary/10 text-primary"
+                    }`}
+                  >
                     {item.year}
                   </span>
                 </div>
-                <p className="text-sm text-gray-400 mt-1">{item.company}</p>
+                <p
+                  className={`text-sm mt-1 ${
+                    hoveredItem === index && activeItem !== index
+                      ? "text-gray-300"
+                      : "text-gray-400"
+                  }`}
+                >
+                  {item.company}
+                </p>
               </motion.button>
             ))}
           </div>

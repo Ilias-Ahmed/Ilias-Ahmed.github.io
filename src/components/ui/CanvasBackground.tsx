@@ -12,21 +12,20 @@ const CanvasBackground: React.FC<CanvasBackgroundProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Get accent color
-  const getAccentColors = () => {
-    const accentColors = {
-      purple: { primary: "#8B5CF6", secondary: "#C4B5FD" },
-      blue: { primary: "#3B82F6", secondary: "#93C5FD" },
-      green: { primary: "#10B981", secondary: "#6EE7B7" },
-      amber: { primary: "#F59E0B", secondary: "#FCD34D" },
-      pink: { primary: "#EC4899", secondary: "#F9A8D4" },
-    };
-
-    return (
-      accentColors[accent as keyof typeof accentColors] || accentColors.purple
-    );
-  };
-
   useEffect(() => {
+    const getAccentColors = () => {
+      const accentColors = {
+        purple: { primary: "#8B5CF6", secondary: "#C4B5FD" },
+        blue: { primary: "#3B82F6", secondary: "#93C5FD" },
+        green: { primary: "#10B981", secondary: "#6EE7B7" },
+        amber: { primary: "#F59E0B", secondary: "#FCD34D" },
+        pink: { primary: "#EC4899", secondary: "#F9A8D4" },
+      };
+
+      return (
+        accentColors[accent as keyof typeof accentColors] || accentColors.purple
+      );
+    };
     const canvas = canvasRef.current;
     if (!canvas) return;
 

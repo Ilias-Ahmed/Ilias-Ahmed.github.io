@@ -1,9 +1,10 @@
 import { useRef, useState, useEffect, useMemo } from "react";
-import ErrorBoundaryWrapper from "@/components/ui/ErrorBoundary"; // Adjust the path as needed
+import ErrorBoundaryWrapper from "@/components/ui/ErrorBoundary";
 import { useSpring } from "@react-spring/web";
 import { useMove } from "@use-gesture/react";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useHeroStore } from "@/hooks/useHero";
+import CanvasBackground from "./CanvasBackground";
 
 // Performance detection utility
 const detectPerformanceLevel = (): "high" | "medium" | "low" => {
@@ -20,36 +21,17 @@ const detectPerformanceLevel = (): "high" | "medium" | "low" => {
   }
 
   // Simple performance detection based on device memory if available
-  if (navigator.deviceMemory) {
-    if (navigator.deviceMemory <= 2) return "low";
-    if (navigator.deviceMemory <= 6) return "medium";
+  if ("deviceMemory" in navigator) {
+    const deviceMemory = (navigator as Navigator & { deviceMemory: number })
+      .deviceMemory;
+    if (deviceMemory <= 2) return "low";
+    if (deviceMemory <= 6) return "medium";
     return "high";
   }
 
   // Default to medium as a safe option
   return "medium";
 };
-
-// Import Three.js components only on client side
-const ThreeJSBackground = () => {
-  // This is a placeholder - we'll load the actual component dynamically
-  return null;
-};
-
-// Dynamically import Three.js components
-let DynamicThreeJSBackground: typeof ThreeJSBackground | null = null;
-
-// This will be called only on the client side
-if (typeof window !== "undefined") {
-  // Use import() to dynamically load the Three.js components
-  import("./ThreeJSBackground")
-    .then((module) => {
-      DynamicThreeJSBackground = module.default;
-    })
-    .catch((err) => {
-      console.error("Failed to load Three.js background:", err);
-    });
-}
 
 const DynamicBackground = () => {
   const { theme, accent = "purple" } = useTheme();
@@ -63,6 +45,8 @@ const DynamicBackground = () => {
   const [isInitialized, setIsInitialized] = useState(false);
   const [useThreeJS, setUseThreeJS] = useState(false);
   const [threeJSFailed, setThreeJSFailed] = useState(false);
+  const [ThreeJSBackground, setThreeJSBackground] =
+    useState<React.ComponentType<{ theme: string; mode: string; performanceLevel: string; x: number; y: number }> | null>(null);
 
   // Use store performance mode if set, otherwise use auto-detected
   const performanceLevel = storePerformanceMode || autoDetectedPerformance;
@@ -81,9 +65,22 @@ const DynamicBackground = () => {
     // Delay initialization to ensure smooth loading
     const timer = setTimeout(() => {
       setIsInitialized(true);
-      // Only enable Three.js if we're on the client and it's available
-      if (typeof window !== "undefined" && DynamicThreeJSBackground) {
-        setUseThreeJS(true);
+
+      // Only try to load Three.js if we're on the client
+      if (typeof window !== "undefined") {
+        // Dynamically import ThreeJSBackground
+        import("./ThreeJSBackground")
+          .then((module) => {
+            setThreeJSBackground(() => (props: { theme: string; mode: string; performanceLevel: string; x: number; y: number }) => {
+              const Component = module.default as React.ComponentType<{ theme: string; mode: string; performanceLevel: string; x: { get: () => number }; y: { get: () => number } }>;
+              return <Component {...props} x={{ get: () => props.x }} y={{ get: () => props.y }} />;
+            });
+            setUseThreeJS(true);
+          })
+          .catch((err) => {
+            console.error("Failed to load Three.js background:", err);
+            setThreeJSFailed(true);
+          });
       }
     }, 200);
 
@@ -116,12 +113,6 @@ const DynamicBackground = () => {
           : 16,
     }
   );
-
-  // Handle ThreeJS error
-  const handleThreeJSError = () => {
-    console.warn("ThreeJS background failed to load, using fallback");
-    setThreeJSFailed(true);
-  };
 
   // Get background gradient based on theme and accent - memoized
   const backgroundStyles = useMemo(() => {
@@ -184,24 +175,25 @@ const DynamicBackground = () => {
         style={backgroundStyles}
       />
 
+      {/* Render Canvas background as fallback */}
+      {(threeJSFailed || performanceLevel === "low") && isInitialized && (
+        <CanvasBackground mousePosition={hoverPosition} />
+      )}
+
       {/* Render Three.js background only if initialized and available */}
-      {isInitialized &&
-        useThreeJS &&
-        DynamicThreeJSBackground &&
-        !threeJSFailed && (
-          <ErrorBoundaryWrapper
-            fallback={<div className="hidden">ThreeJS failed</div>}
-            onError={handleThreeJSError}
-          >
-            <DynamicThreeJSBackground
-              theme={theme}
-              mode={mode}
-              performanceLevel={performanceLevel}
-              x={x}
-              y={y}
-            />
-          </ErrorBoundaryWrapper>
-        )}
+      {isInitialized && useThreeJS && ThreeJSBackground && !threeJSFailed && (
+        <ErrorBoundaryWrapper
+          fallback={<div className="hidden">ThreeJS failed</div>}
+        >
+          <ThreeJSBackground
+            theme={theme}
+            mode={mode}
+            performanceLevel={performanceLevel}
+            x={x.get()}
+            y={y.get()}
+          />
+        </ErrorBoundaryWrapper>
+      )}
 
       {/* Optional foreground noise texture - only on medium/high */}
       {performanceLevel !== "low" && (

@@ -30,14 +30,9 @@ const NavigationMenu = React.lazy(
 const Toaster = React.lazy(() =>
   import("@/components/ui/sonner").then((mod) => ({ default: mod.Toaster }))
 );
-const VoiceCommandsHelp = React.lazy(
-  () => import("@/components/navigation/VoiceCommandsHelp")
-);
+const PortfolioHelp = React.lazy(() => import("@/components/PortfolioHelp"));
 const VoiceNavigationIndicator = React.lazy(
   () => import("@/components/navigation/VoiceNavigationIndicator")
-);
-const NavigationIndicator = React.lazy(
-  () => import("@/components/navigation/NavigationIndicator")
 );
 const NavigationTrail = React.lazy(
   () => import("@/components/navigation/NavigationTrail")
@@ -330,15 +325,6 @@ const Index = () => {
         {/* Scroll progress indicator */}
         <ScrollProgressBar />
 
-        {/* Navigation indicator */}
-        <Suspense fallback={null}>
-          <NavigationIndicator
-            currentPath={location.pathname}
-            routes={routes}
-            isNavigating={isNavigating}
-          />
-        </Suspense>
-
         {/* Voice navigation indicator - only render when supported */}
         {voiceSupported && (
           <Suspense fallback={null}>
@@ -348,12 +334,16 @@ const Index = () => {
               transcript={transcript}
               voiceSupported={voiceSupported}
             />
-
-            <AnimatePresence>
-              {isListening && <VoiceCommandsHelp />}
-            </AnimatePresence>
           </Suspense>
         )}
+
+        {/* Portfolio help tooltip */}
+        <Suspense fallback={null}>
+          <PortfolioHelp
+            isVisible={hasInteracted}
+            onClose={() => setHasInteracted(false)}
+          />
+        </Suspense>
 
         {/* Toast notifications */}
         <Suspense fallback={null}>

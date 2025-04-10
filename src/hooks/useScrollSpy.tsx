@@ -15,7 +15,6 @@ export const useScrollSpy = (sections: Section[], offset = 0) => {
   const checkSections = useCallback(() => {
     if (!lenis || isScrolling) return;
 
-    const scrollPosition = lenis.scroll;
 
     // Get all section elements
     const sectionElements = sections

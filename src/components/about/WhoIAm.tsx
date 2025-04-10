@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import TechStack, { TechStackItem } from "./TechStack";
+import { TechStackItem } from "./aboutData";
 interface WhoIAmProps {
+
   techStack: TechStackItem[];
   isInView: boolean;
 }
@@ -31,9 +32,13 @@ const WhoIAm = ({ techStack, isInView }: WhoIAmProps) => {
       </p>
 
       {/* Tech Stack Section */}
-      <TechStack techStack={techStack} />
+      <div className="tech-stack">
+        {techStack.map((tech, index) => (
+          <div key={index} className="tech-item">
+            {tech.name}
+          </div>
+        ))}
+      </div>
     </motion.div>
   );
-};
-
-export default WhoIAm;
+};export default WhoIAm;

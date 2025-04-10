@@ -20,7 +20,7 @@ const VoiceNavigationIndicator = ({
   if (!voiceSupported) return null;
 
   // Colors based on mode
-  const primaryColor = mode === "coder" ? "#3080ff" : "#ff3080";
+  const primaryColor = mode === "developer" ? "#3080ff" : "#ff3080";
 
   return (
     <div className="fixed left-4 bottom-4 z-40">
@@ -36,14 +36,16 @@ const VoiceNavigationIndicator = ({
             boxShadow: isListening
               ? [
                   `0 0 0 0px rgba(${
-                    mode === "coder" ? "48, 128, 255" : "255, 48, 128"
+                    mode === "developer" ? "48, 128, 255" : "255, 48, 128"
                   }, 0)`,
+
                   `0 0 0 4px rgba(${
-                    mode === "coder" ? "48, 128, 255" : "255, 48, 128"
+                    mode === "developer" ? "48, 128, 255" : "255, 48, 128"
                   }, 0.3)`,
+
                 ]
               : `0 0 0 0px rgba(${
-                  mode === "coder" ? "48, 128, 255" : "255, 48, 128"
+                  mode === "developer" ? "48, 128, 255" : "255, 48, 128"
                 }, 0)`,
           }}
           transition={{
@@ -91,13 +93,13 @@ const VoiceNavigationIndicator = ({
               scale: [1, 1.2, 1],
               backgroundColor: [
                 `rgba(${
-                  mode === "coder" ? "48, 128, 255" : "255, 48, 128"
+                  mode === "developer" ? "48, 128, 255" : "255, 48, 128"
                 }, 0.1)`,
                 `rgba(${
-                  mode === "coder" ? "48, 128, 255" : "255, 48, 128"
+                  mode === "developer" ? "48, 128, 255" : "255, 48, 128"
                 }, 0.2)`,
                 `rgba(${
-                  mode === "coder" ? "48, 128, 255" : "255, 48, 128"
+                  mode === "developer" ? "48, 128, 255" : "255, 48, 128"
                 }, 0.1)`,
               ],
             }}
@@ -111,7 +113,6 @@ const VoiceNavigationIndicator = ({
         )}
       </AnimatePresence>
     </div>
-  );
-};
+  );};
 
 export default VoiceNavigationIndicator;

@@ -7,7 +7,7 @@ const VoiceCommandsHelp = () => {
   const { mode } = useHeroStore();
 
   // Colors based on mode
-  const primaryColor = mode === "coder" ? "#3080ff" : "#ff3080";
+  const primaryColor = mode === "developer" ? "#3080ff" : "#ff3080";
 
   const commands = [
     { command: "Go to [page]", description: "Navigate to a specific page" },

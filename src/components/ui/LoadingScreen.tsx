@@ -1,6 +1,5 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "@/contexts/ThemeContext";
 
 interface LoadingScreenProps {
   onLoadingComplete?: () => void;
@@ -10,18 +9,17 @@ const LoadingScreen = ({ onLoadingComplete }: LoadingScreenProps) => {
   const [progress, setProgress] = useState(0);
   const [loadingComplete, setLoadingComplete] = useState(false);
   const [exitAnimation, setExitAnimation] = useState(false);
-  const { theme } = useTheme();
   const [quote, setQuote] = useState("");
   const [typedQuote, setTypedQuote] = useState("");
   const [typingIndex, setTypingIndex] = useState(0);
 
-  const quotes = [
+  const quotes = useMemo(() => [
     "Dream big, work hard, stay focused.",
     "Every great design begins with an even better story.",
     "Innovation distinguishes between a leader and a follower.",
     "The only limit is your imagination.",
     "The future belongs to those who believe in the beauty of their dreams.",
-  ];
+  ], []);
 
   // Handle typing effect for quotes
   useEffect(() => {
@@ -336,5 +334,4 @@ const LoadingScreen = ({ onLoadingComplete }: LoadingScreenProps) => {
     </AnimatePresence>
   );
 };
-
 export default LoadingScreen;

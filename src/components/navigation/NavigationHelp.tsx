@@ -1,7 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useHeroStore } from "@/hooks/useHero";
 import { cn } from "@/lib/utils";
 
 interface NavigationHelpProps {
@@ -14,7 +13,6 @@ const NavigationHelp = ({ initialTab = "menu" }: NavigationHelpProps) => {
     "voice" | "keyboard" | "gesture" | "menu"
   >(initialTab);
   const { theme, accent } = useTheme();
-  const { mode } = useHeroStore();
   const isDark = theme === "dark";
 
   // Get accent color

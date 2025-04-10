@@ -274,7 +274,7 @@ export const useNavigation = ({
 
   // Implement gesture-based navigation
   const handleDrag = useCallback(
-    ({ direction: [xDir], distance, cancel }) => {
+    ({ direction: [xDir], distance, cancel }: { direction: [number, number]; distance: [number, number]; cancel: () => void }) => {
       if (!enableGestures) return;
 
       if (Math.sqrt(distance[0] ** 2 + distance[1] ** 2) > 100) {

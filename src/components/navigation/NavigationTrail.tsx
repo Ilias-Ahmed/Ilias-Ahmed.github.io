@@ -11,8 +11,8 @@ const NavigationTrail = ({ isActive, direction }: NavigationTrailProps) => {
   const trailRef = useRef<HTMLDivElement>(null);
 
   // Colors based on mode
-  const primaryColor = mode === "coder" ? "#3080ff" : "#ff3080";
-  const secondaryColor = mode === "coder" ? "#22c55e" : "#ffbb00";
+  const primaryColor = mode === "developer" ? "#3080ff" : "#ff3080";
+  const secondaryColor = mode === "developer" ? "#22c55e" : "#ffbb00";
 
   // Create particles when navigation is active
   useEffect(() => {
