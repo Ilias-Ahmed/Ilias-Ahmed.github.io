@@ -34,7 +34,7 @@ const FloatingErrorCode: React.FC<FloatingErrorCodeProps> = ({
       position={[0, 0, 0]}
       fontSize={viewport.width / 12}
       color="#f0f0f0"
-      font="/fonts/Orbitron-Bold.ttf"
+      font="/fonts/Inter-Bold.woff"
       letterSpacing={0.1}
       textAlign="center"
     >

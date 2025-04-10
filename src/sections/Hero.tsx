@@ -139,66 +139,6 @@ const Effects = ({ isHovered }: { isHovered: boolean }) => {
   );
 };
 
-// Floating particles in the background
-const Particles = () => {
-  const particlesRef = useRef<THREE.Points>(null);
-  const count = 100;
-  const positions = new Float32Array(count * 3);
-  const sizes = new Float32Array(count);
-
-  useEffect(() => {
-    for (let i = 0; i < count; i++) {
-      const i3 = i * 3;
-      positions[i3] = (Math.random() - 0.5) * 15;
-      positions[i3 + 1] = (Math.random() - 0.5) * 15;
-      positions[i3 + 2] = (Math.random() - 0.5) * 15;
-      sizes[i] = Math.random() * 0.5 + 0.1;
-    }
-  }, []);
-
-  useFrame((state) => {
-    if (!particlesRef.current) return;
-
-    const time = state.clock.getElapsedTime();
-
-    for (let i = 0; i < count; i++) {
-      const i3 = i * 3;
-      positions[i3 + 1] += Math.sin(time * 0.1 + i) * 0.01;
-      positions[i3] += Math.cos(time * 0.1 + i) * 0.01;
-    }
-
-    particlesRef.current.geometry.attributes.position.needsUpdate = true;
-  });
-
-  return (
-    <points>
-      <bufferGeometry ref={particlesRef}>
-        <bufferAttribute
-          attach="attributes-position"
-          args={[positions, 3]}
-          count={count}
-          array={positions}
-          itemSize={3}
-        />
-        <bufferAttribute
-          attach="attributes-size"
-          args={[sizes, 1]}
-          count={count}
-          array={sizes}
-          itemSize={1}
-        />
-      </bufferGeometry>
-      <pointsMaterial
-        size={0.1}
-        color="#8B5CF6"
-        sizeAttenuation
-        transparent
-        alphaMap={useTexture("/images/particle.jpg")}
-        alphaTest={0.001}
-      />
-    </points>
-  );
-};
 // Main Hero component
 const Hero = () => {
   const [isHovered, setIsHovered] = useState(false);
@@ -289,7 +229,6 @@ const Hero = () => {
           />
 
           <GridFloor />
-          <Particles />
           <Environment preset="city" />
           <Effects isHovered={isHovered} />
         </Canvas>
@@ -416,54 +355,9 @@ const Hero = () => {
                       d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                     />
                   </svg>
-                  <span>Contact Me</span>
+                  <span>Let's Connect</span>
                 </span>
               </motion.button>
-            </motion.div>
-          </motion.div>
-
-          {/* Tech stack icons */}
-          <motion.div
-            className="mt-16 flex justify-center"
-            variants={itemVariants}
-          >
-            <motion.div
-              className="grid grid-cols-3 md:grid-cols-6 gap-6"
-              variants={containerVariants}
-            >
-                {[
-                { name: "React", icon: "/icons/react.svg" },
-                { name: "Three.js", icon: "/icons/threejs.svg" },
-                { name: "TypeScript", icon: "/icons/typescript.svg" },
-                { name: "Tailwind", icon: "/icons/tailwind.svg" },
-                { name: "WebGL", icon: "/icons/webgl.svg" },
-                { name: "Blender", icon: "/icons/blender.svg" },
-                ].map((tech) => (
-                <motion.div
-                  key={tech.name}
-                  className="flex flex-col items-center"
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.1, y: -5 }}
-                >
-                  <motion.div
-                  className="w-12 h-12 md:w-16 md:h-16 bg-gray-800/50 rounded-xl p-3 flex items-center justify-center
-                        border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300"
-                  whileHover={{
-                    boxShadow: "0 0 15px rgba(139, 92, 246, 0.5)",
-                    borderColor: "rgba(139, 92, 246, 0.5)",
-                  }}
-                  >
-                  <img
-                    src={tech.icon}
-                    alt={tech.name}
-                    className="w-full h-full object-contain"
-                  />
-                  </motion.div>
-                  <span className="text-xs text-gray-400 mt-2">
-                  {tech.name}
-                  </span>
-                </motion.div>
-                ))}
             </motion.div>
           </motion.div>
         </motion.div>
