@@ -83,7 +83,7 @@ const ProfileCard = () => {
                   {/* Profile image */}
                   <img
                     src={profileImage}
-                    alt="Alex Morgan"
+                    alt="Ilias Ahmed"
                     className="object-cover w-full h-full"
                   />
 
@@ -94,8 +94,14 @@ const ProfileCard = () => {
                   <div className="absolute bottom-0 left-0 right-0 p-6 flex justify-center gap-4">
                     {[
                       { icon: <Github size={18} />, url: "https://github.com" },
-                      { icon: <Linkedin size={18} />, url: "https://linkedin.com" },
-                      { icon: <Twitter size={18} />, url: "https://twitter.com" }
+                      {
+                        icon: <Linkedin size={18} />,
+                        url: "https://linkedin.com",
+                      },
+                      {
+                        icon: <Twitter size={18} />,
+                        url: "https://twitter.com",
+                      },
                     ].map((social, index) => (
                       <motion.a
                         key={index}
@@ -164,9 +170,7 @@ const ProfileCard = () => {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.8 }}
                   >
-                    <p className="text-sm text-white/70">
-                      Tap to flip back
-                    </p>
+                    <p className="text-sm text-white/70">Tap to flip back</p>
                   </motion.div>
                 </div>
               </div>
@@ -203,7 +207,7 @@ const ProfileCard = () => {
                 transition={{ delay: 0.2 }}
                 className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400"
               >
-                Alex Morgan
+                Ilias Ahmed
               </motion.span>
             </h2>
             <div className="w-20 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full"></div>
@@ -243,9 +247,12 @@ const ProfileCard = () => {
             </div>
           </motion.div>
 
-          <motion.div variants={itemVariants} className="flex flex-wrap gap-4 pt-4">
+          <motion.div
+            variants={itemVariants}
+            className="flex flex-wrap gap-4 pt-4"
+          >
             <motion.a
-              href="#contact"
+              href="/contact"
               className="px-6 py-3 bg-gradient-to-r from-primary to-purple-600 text-white rounded-full flex items-center gap-2 transition-all hover:shadow-lg hover:shadow-primary/20"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
