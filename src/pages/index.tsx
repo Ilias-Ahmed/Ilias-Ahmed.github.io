@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect, Suspense, useMemo } from "react";
-import { useTheme } from "@/contexts/ThemeContext";
 import Hero from "@/sections/Hero";
 import ScrollProgressBar from "@/components/ui/ScrollProgressBar";
 import { NavigationProvider } from "@/contexts/NavigationContext";
 import Navigation from "@/components/navigation/Navigation";
 import CustomCursor from "@/components/ui/CustomCursor";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const Toaster = React.lazy(() =>
   import("@/components/ui/sonner").then((mod) => ({ default: mod.Toaster }))
@@ -22,11 +22,13 @@ const ContactSection = React.lazy(() => import("@/sections/ContactSection"));
  * Main Index component - Optimized for performance
  */
 const Index = () => {
-  const { theme } = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const isMobile = useIsMobile();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const scrollingRef = useRef(false);
 
   // Define navigation sections
   const navSections = useMemo(
@@ -35,40 +37,79 @@ const Index = () => {
         id: "home",
         name: "Home",
         href: "#home",
+        path: "/",
         keywords: ["start", "landing", "main"],
       },
       {
         id: "about",
         name: "About",
         href: "#about",
+        path: "/about",
         keywords: ["me", "bio", "profile"],
       },
       {
         id: "skills",
         name: "Skills",
         href: "#skills",
+        path: "/skills",
         keywords: ["abilities", "expertise", "tech stack"],
       },
       {
         id: "projects",
         name: "Projects",
         href: "#projects",
+        path: "/projects",
         keywords: ["work", "portfolio", "showcase"],
       },
       {
         id: "contact",
         name: "Contact",
         href: "#contact",
+        path: "/contact",
         keywords: ["message", "get in touch", "email"],
       },
     ],
     []
   );
 
-  // Track scroll progress
+  // Handle URL-based navigation on initial load and URL changes
   useEffect(() => {
+    // Don't process if we're already scrolling programmatically
+    if (scrollingRef.current) return;
+
+    const path = location.pathname;
+    let targetSection;
+
+    if (path === "/") {
+      targetSection = "home";
+    } else {
+      // Remove leading slash and find matching section
+      const sectionId = path.substring(1);
+      const matchingSection = navSections.find(
+        (section) => section.id === sectionId
+      );
+      targetSection = matchingSection ? matchingSection.id : "home";
+    }
+
+    const element = document.getElementById(targetSection);
+    if (element) {
+      // Set flag to prevent scroll handler from firing during programmatic scroll
+      scrollingRef.current = true;
+      element.scrollIntoView({ behavior: "smooth" });
+
+      // Reset flag after animation completes
+      setTimeout(() => {
+        scrollingRef.current = false;
+      }, 1000);
+    }
+  }, [location.pathname, navSections]);
+
+  // Track scroll progress and update URL
+  useEffect(() => {
+    let scrollTimeout: NodeJS.Timeout;
+
     const handleScroll = () => {
-      if (typeof window === "undefined") return;
+      if (typeof window === "undefined" || scrollingRef.current) return;
 
       // Calculate scroll progress
       const windowHeight = window.innerHeight;
@@ -77,11 +118,40 @@ const Index = () => {
       const progress = scrollTop / (documentHeight - windowHeight);
 
       setScrollProgress(Math.min(1, Math.max(0, progress)));
+
+      // Debounce URL updates to avoid excessive history entries
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        // Find which section is most visible
+        const viewportMid = scrollTop + windowHeight / 2;
+
+        for (const section of navSections) {
+          const element = document.getElementById(section.id);
+          if (!element) continue;
+
+          const rect = element.getBoundingClientRect();
+          const sectionTop = scrollTop + rect.top;
+          const sectionBottom = sectionTop + rect.height;
+
+          // If viewport middle is within this section
+          if (viewportMid >= sectionTop && viewportMid <= sectionBottom) {
+            // Only update URL if it's different from current path
+            const targetPath = section.id === "home" ? "/" : `/${section.id}`;
+            if (location.pathname !== targetPath) {
+              navigate(targetPath, { replace: true });
+            }
+            break;
+          }
+        }
+      }, 200);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(scrollTimeout);
+    };
+  }, [navSections, navigate, location.pathname]);
 
   // Simulate loading
   useEffect(() => {

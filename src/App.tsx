@@ -19,8 +19,14 @@ function App() {
             }
           >
             <Routes>
-              {/* Single route for the main page */}
+              {/* Main route */}
               <Route path="/" element={<Index />} />
+
+              {/* Section routes - all handled by Index component */}
+              <Route path="/about" element={<Index />} />
+              <Route path="/skills" element={<Index />} />
+              <Route path="/projects" element={<Index />} />
+              <Route path="/contact" element={<Index />} />
 
               {/* Catch all non-matching routes */}
               <Route path="*" element={<NotFound />} />
