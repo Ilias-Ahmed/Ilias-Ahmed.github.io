@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLenis } from "../SmoothScroll";
 import { throttle } from "lodash";
 
 const CustomCursor = () => {
@@ -16,7 +15,6 @@ const CustomCursor = () => {
   const clickPosition = useRef({ x: 0, y: 0 });
   const isMouseDown = useRef(false);
   const hoverElementRef = useRef<HTMLElement | null>(null);
-  const { lenis } = useLenis();
 
   // Cursor size based on state
   const getCursorSize = useCallback(() => {
@@ -127,9 +125,6 @@ const CustomCursor = () => {
     window.addEventListener("mouseleave", handleMouseLeave);
     document.addEventListener("mouseover", throttledHoverDetect);
 
-    if (lenis) {
-      lenis.on("scroll", updateCursorPosition);
-    }
 
     animationFrameId = requestAnimationFrame(updateCursorPosition);
 
@@ -145,9 +140,8 @@ const CustomCursor = () => {
       throttledMouseMove.cancel();
       throttledHoverDetect.cancel();
 
-      if (lenis) lenis.off("scroll", updateCursorPosition);
     };
-  }, [cursorState, lenis, getCursorSize]);
+  }, [cursorState, getCursorSize]);
 
   if (typeof window !== "undefined" && window.innerWidth < 768) return null;
 

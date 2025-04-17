@@ -4,6 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  /* Base colors */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -23,12 +24,17 @@
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+
+  /* Default chart colors */
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
+
   --radius: 0.625rem;
+
+  /* Sidebar colors */
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -37,6 +43,52 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Accent color variables */
+  --accent-purple: oklch(0.488 0.243 264.376);
+  --accent-purple-light: #8B5CF6;
+  --accent-purple-dark: #6D28D9;
+
+  --accent-blue: oklch(0.6 0.118 184.704);
+  --accent-blue-light: #3B82F6;
+  --accent-blue-dark: #2563EB;
+
+  --accent-pink: oklch(0.645 0.246 16.439);
+  --accent-pink-light: #EC4899;
+  --accent-pink-dark: #DB2777;
+
+  /* Default accent is purple */
+  --accent-current: var(--accent-purple);
+  --accent-current-light: var(--accent-purple-light);
+  --accent-current-dark: var(--accent-purple-dark);
+}
+
+/* Accent color variations */
+:root[data-accent="purple"] {
+  --accent-current: var(--accent-purple);
+  --accent-current-light: var(--accent-purple-light);
+  --accent-current-dark: var(--accent-purple-dark);
+  --chart-1: var(--accent-purple);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --sidebar-primary: var(--accent-purple);
+}
+
+:root[data-accent="blue"] {
+  --accent-current: var(--accent-blue);
+  --accent-current-light: var(--accent-blue-light);
+  --accent-current-dark: var(--accent-blue-dark);
+  --chart-1: var(--accent-blue);
+  --chart-4: oklch(0.696 0.17 162.48);
+  --sidebar-primary: var(--accent-blue);
+}
+
+:root[data-accent="pink"] {
+  --accent-current: var(--accent-pink);
+  --accent-current-light: var(--accent-pink-light);
+  --accent-current-dark: var(--accent-pink-dark);
+  --chart-1: var(--accent-pink);
+  --chart-4: oklch(0.769 0.188 70.08);
+  --sidebar-primary: var(--accent-pink);
 }
 
 .dark {
@@ -59,14 +111,18 @@
   --border: oklch(0.269 0 0);
   --input: oklch(0.269 0 0);
   --ring: oklch(0.439 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
+
+  /* Default chart colors for dark mode */
+  --chart-1: var(--accent-current);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
+
+  /* Sidebar colors for dark mode */
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary: var(--accent-current);
   --sidebar-primary-foreground: oklch(0.985 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
@@ -130,6 +186,7 @@
     width: 100%;
     margin: 0;
     padding: 0;
+    cursor: none; /* Hide default cursor */
   }
 
   html {
@@ -140,6 +197,11 @@
     @apply bg-background text-foreground;
     width: 100%;
     overflow-x: hidden;
+  }
+
+  /* Hide cursor on all elements */
+  a, button, input, textarea, select, [role="button"], .interactive {
+    cursor: none;
   }
 }
 
@@ -162,11 +224,31 @@
   }
 
   .text-gradient {
+    background: linear-gradient(to right, var(--accent-current-light), var(--accent-current-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .text-gradient-purple {
     background: linear-gradient(to right, #9c51ff, #5e72eb);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     color: transparent;
+  }
+
+  .text-accent {
+    color: var(--accent-current-light);
+  }
+
+  .bg-accent {
+    background-color: var(--accent-current);
+  }
+
+  .border-accent {
+    border-color: var(--accent-current-light);
   }
 
   .perspective-1000 {

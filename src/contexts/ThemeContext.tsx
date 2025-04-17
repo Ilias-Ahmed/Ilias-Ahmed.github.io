@@ -11,7 +11,7 @@ import {
 
 // Theme types
 export type ThemeMode = "light" | "dark";
-export type ThemeAccent = "purple" | "blue" | "green" | "amber" | "pink";
+export type ThemeAccent = "purple" | "blue" | "pink";
 
 export interface ThemeOptions {
   mode: ThemeMode;
@@ -100,13 +100,51 @@ export function ThemeProvider({
 
     const { mode, accent } = themeOptions;
 
-    document.documentElement.classList.toggle("dark", mode === "dark");
-    document.documentElement.classList.toggle("light", mode === "light");
-    document.documentElement.dataset.accent = accent;
+    // Apply theme mode
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(mode);
 
+    // Apply accent color
+    document.documentElement.setAttribute("data-accent", accent);
+
+    // Update CSS variables for accent colors
+    const accentColors = {
+      purple: {
+        primary: "oklch(0.488 0.243 264.376)",
+        secondary: "oklch(0.627 0.265 303.9)",
+        light: "#8B5CF6",
+        dark: "#6D28D9",
+      },
+      blue: {
+        primary: "oklch(0.6 0.118 184.704)",
+        secondary: "oklch(0.696 0.17 162.48)",
+        light: "#3B82F6",
+        dark: "#2563EB",
+      },
+      pink: {
+        primary: "oklch(0.645 0.246 16.439)",
+        secondary: "oklch(0.769 0.188 70.08)",
+        light: "#EC4899",
+        dark: "#DB2777",
+      },
+    };
+
+    // Apply accent color to CSS variables
+    const root = document.documentElement;
+    if (mode === "dark") {
+      root.style.setProperty("--sidebar-primary", accentColors[accent].primary);
+      root.style.setProperty("--chart-1", accentColors[accent].primary);
+      root.style.setProperty("--chart-4", accentColors[accent].secondary);
+    } else {
+      root.style.setProperty("--chart-1", accentColors[accent].dark);
+      root.style.setProperty("--chart-3", accentColors[accent].light);
+    }
+
+    // Store in localStorage
     localStorage.setItem("theme", mode);
     localStorage.setItem("accent", accent);
 
+    // Update meta theme color
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
       metaThemeColor.setAttribute(
@@ -116,9 +154,9 @@ export function ThemeProvider({
     }
   }, [themeOptions]);
 
-    const setThemeOptions = useCallback((options: Partial<ThemeOptions>) => {
-      setThemeOptionsState((prev) => ({ ...prev, ...options }));
-    }, []);
+  const setThemeOptions = useCallback((options: Partial<ThemeOptions>) => {
+    setThemeOptionsState((prev) => ({ ...prev, ...options }));
+  }, []);
 
   // Handlers with `setThemeOptions`
   const toggleTheme = useCallback(() => {
@@ -128,20 +166,25 @@ export function ThemeProvider({
     }));
   }, []);
 
-  const setTheme = useCallback((mode: ThemeMode) => {
-    setThemeOptions({ mode });
-  }, [setThemeOptions]);
+  const setTheme = useCallback(
+    (mode: ThemeMode) => {
+      setThemeOptions({ mode });
+    },
+    [setThemeOptions]
+  );
 
-  const setAccent = useCallback((accent: ThemeAccent) => {
-    setThemeOptions({ accent });
-  }, [setThemeOptions]);
+  const setAccent = useCallback(
+    (accent: ThemeAccent) => {
+      setThemeOptions({ accent });
+    },
+    [setThemeOptions]
+  );
 
   const useSystemTheme = useCallback(() => {
     if (systemTheme) {
       setThemeOptions({ mode: systemTheme });
     }
   }, [systemTheme, setThemeOptions]);
-
 
   // Memoized values
   const { mode, accent } = themeOptions;

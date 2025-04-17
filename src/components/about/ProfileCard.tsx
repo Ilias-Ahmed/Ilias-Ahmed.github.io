@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { ArrowRight, Download, Github, Linkedin, Twitter } from "lucide-react";
-import profileImage from "../../assets/images/profile.png";
+import profileImage from "/images/profile.png?url"; // Adjust the path as necessary
 import ResumeViewer from "../ui/ResumeViewer";
 
 const ProfileCard = () => {
