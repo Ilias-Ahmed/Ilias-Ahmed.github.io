@@ -1,3 +1,4 @@
+import { triggerHapticFeedback } from "@/utils/haptics";
 import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 
@@ -410,7 +411,10 @@ const NotFound: React.FC = () => {
           <button
             className="px-8 py-3 bg-transparent text-indigo-400 font-medium rounded-lg
                       border border-indigo-500/30 hover:border-indigo-500/70 transition-all duration-300 hover:bg-indigo-500/10"
-            onClick={() => window.history.back()}
+            onClick={() => {
+              window.history.back()
+              triggerHapticFeedback()
+            }}
           >
             <span className="flex items-center justify-center">
               <svg

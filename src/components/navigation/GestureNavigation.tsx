@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useGesture } from "@use-gesture/react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { motion } from "framer-motion";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 type NavSection = {
   name: string;
@@ -210,7 +211,10 @@ const GestureNavigation = (): React.ReactElement | null => {
               }
             `}
             whileHover={{ scale: 1.5 }}
-            onClick={() => navigateToSection(index)}
+            onClick={() => {
+              navigateToSection(index)
+              triggerHapticFeedback();
+            }}
             aria-label={`Navigate to ${section.name}`}
             aria-current={index === currentSectionIndex ? "page" : undefined}
             animate={{

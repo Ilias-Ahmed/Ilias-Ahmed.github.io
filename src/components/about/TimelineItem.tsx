@@ -1,3 +1,4 @@
+import { triggerHapticFeedback } from "@/utils/haptics";
 import { motion, AnimatePresence } from "framer-motion";
 export interface TimelineItemProps {
   year: string;
@@ -61,7 +62,7 @@ const TimelineItem = ({
           y: -5,
           boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)"
         }}
-        onClick={() => setActiveTimelineItem(activeTimelineItem === index ? null : index)}
+        onClick={() => { setActiveTimelineItem(activeTimelineItem === index ? null : index); triggerHapticFeedback(); }}
       >
         <span className="inline-block px-2 sm:px-3 py-1 text-xs rounded-full bg-primary/20 text-primary mb-2">
           {year}

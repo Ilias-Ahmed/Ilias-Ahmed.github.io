@@ -9,6 +9,7 @@ import BackToTop from "../ui/BackToTop";
 import { Command } from "lucide-react";
 import CommandPalette from "../ui/CommandPalette";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface NavigationProps {
   enableDots?: boolean;
@@ -17,6 +18,8 @@ interface NavigationProps {
   enableCommandPalette?: boolean;
   enableBackToTop?: boolean;
 }
+
+
 
 const Navigation: React.FC<NavigationProps> = ({
   enableDots = true,
@@ -51,7 +54,10 @@ const Navigation: React.FC<NavigationProps> = ({
     <>
       {/* Inline Menu Toggle Button */}
       <motion.button
-        onClick={toggleMenu}
+        onClick={() => {
+          toggleMenu();
+          triggerHapticFeedback();
+        }}
         className="fixed top-6 right-6 z-[60] p-3 bg-background/80 backdrop-blur-sm border border-border rounded-full"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
@@ -94,6 +100,7 @@ const Navigation: React.FC<NavigationProps> = ({
                 onClick={() => {
                   toggleMenu();
                   setIsCommandPaletteOpen(true);
+                  triggerHapticFeedback();
                 }}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -124,7 +125,11 @@ const Hero = () => {
               whileTap={{ scale: 0.98 }}
               className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg
                         shadow-lg transition-all duration-300 relative overflow-hidden"
-              onClick={handleExploreClick}
+              onClick={() => {
+                handleExploreClick()
+                triggerHapticFeedback()
+              }
+              }
             >
               <span className="relative z-10 flex items-center justify-center">
                 <svg
@@ -154,7 +159,11 @@ const Hero = () => {
               whileTap={{ scale: 0.98 }}
               className="w-full sm:w-auto px-8 py-3 bg-transparent text-purple-400 font-medium rounded-lg
                         border border-purple-500/30 transition-all duration-300"
-              onClick={handleContactClick}
+              onClick={() => {
+                handleContactClick()
+                triggerHapticFeedback()
+              }
+              }
             >
               <span className="flex items-center justify-center">
                 <svg

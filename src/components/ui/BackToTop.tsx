@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUp } from "lucide-react";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface BackToTopProps {
   threshold?: number;
@@ -43,7 +44,7 @@ const BackToTop: React.FC<BackToTopProps> = ({
       {isVisible && (
         <motion.button
           className={`fixed z-40 p-3 rounded-full bg-cyberpunk-dark/70 border border-cyberpunk-blue hover:bg-cyberpunk-dark shadow-lg shadow-cyberpunk-blue/20 backdrop-blur-sm ${positionClasses[position]} ${className}`}
-          onClick={scrollToTop}
+          onClick={()=>{scrollToTop(); triggerHapticFeedback()}}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}

@@ -16,6 +16,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useTheme } from "@/contexts/ThemeContext";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface NavigationContentProps {
   children?: ReactNode;
@@ -142,7 +143,10 @@ const NavigationContent: React.FC<NavigationContentProps> = ({ children }) => {
                   variants={itemVariants}
                   whileHover={{ x: 5 }}
                   className="w-full flex items-center gap-3 p-2 rounded-md hover:bg-muted text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-                  onClick={() => handleNavigation(section.id)}
+                  onClick={() => {
+                    handleNavigation(section.id)
+                    triggerHapticFeedback();
+                  }}
                 >
                   {sectionIcons[section.id] || <PanelLeft size={18} />}
                   <span>{section.name}</span>
@@ -176,7 +180,10 @@ const NavigationContent: React.FC<NavigationContentProps> = ({ children }) => {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => setTheme("light")}
+                      onClick={() => {
+                        setTheme("light")
+                        triggerHapticFeedback();
+                      }}
                       className={`p-2 rounded-md flex items-center justify-center ${
                         theme === "light"
                           ? "bg-primary text-primary-foreground"
@@ -191,7 +198,10 @@ const NavigationContent: React.FC<NavigationContentProps> = ({ children }) => {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => setTheme("dark")}
+                      onClick={() => {
+                        setTheme("dark")
+                        triggerHapticFeedback();
+                      }}
                       className={`p-2 rounded-md flex items-center justify-center ${
                         theme === "dark"
                           ? "bg-primary text-primary-foreground"
@@ -215,7 +225,10 @@ const NavigationContent: React.FC<NavigationContentProps> = ({ children }) => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => setAccent("purple")}
+                        onClick={() => {
+                          setAccent("purple")
+                          triggerHapticFeedback();
+                        }}
                         className={`p-2 rounded-md flex items-center justify-center ${
                           accent === "purple"
                             ? "bg-primary text-primary-foreground"
@@ -230,7 +243,10 @@ const NavigationContent: React.FC<NavigationContentProps> = ({ children }) => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => setAccent("blue")}
+                        onClick={() => {
+                          setAccent("blue")
+                          triggerHapticFeedback();
+                        }}
                         className={`p-2 rounded-md flex items-center justify-center ${
                           accent === "blue"
                             ? "bg-primary text-primary-foreground"
@@ -245,7 +261,10 @@ const NavigationContent: React.FC<NavigationContentProps> = ({ children }) => {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        onClick={() => setAccent("pink")}
+                        onClick={() => {
+                          setAccent("pink")
+                          triggerHapticFeedback();
+                        }}
                         className={`p-2 rounded-md flex items-center justify-center ${
                           accent === "pink"
                             ? "bg-primary text-primary-foreground"

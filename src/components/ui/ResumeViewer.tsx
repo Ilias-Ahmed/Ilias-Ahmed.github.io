@@ -12,6 +12,7 @@ import {
 } from "@react-pdf/renderer";
 import gsap from "gsap";
 import PropTypes from "prop-types";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 // Utility function for conditional class names
 const cn = (...classes: (string | undefined | null | false)[]) => {
@@ -372,7 +373,10 @@ const ResumeViewer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOp
                   className="flex bg-black/30 rounded-full p-1"
                 >
                   <button
-                    onClick={() => setViewMode("interactive")}
+                    onClick={() => {
+                      setViewMode("interactive")
+                      triggerHapticFeedback();
+                    }}
                     className={cn(
                       "px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1.5 transition-all",
                       viewMode === "interactive"
@@ -384,7 +388,10 @@ const ResumeViewer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOp
                     <span>Interactive</span>
                   </button>
                   <button
-                    onClick={() => setViewMode("pdf")}
+                    onClick={() => {
+                      setViewMode("pdf")
+                      triggerHapticFeedback();
+                    }}
                     className={cn(
                       "px-3 py-1.5 rounded-full text-sm font-medium flex items-center gap-1.5 transition-all",
                       viewMode === "pdf"
@@ -421,7 +428,7 @@ const ResumeViewer: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOp
                   initial={{ y: -10, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: 0.5 }}
-                  onClick={onClose}
+                  onClick={()=>{onClose(); triggerHapticFeedback();}}
                   className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
                 >
                   <X size={18} />

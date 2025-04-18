@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 // Define schema with Zod
 const contactFormSchema = z.object({
@@ -173,9 +174,11 @@ const ContactForm = () => {
               possible.
             </p>
             <button
-              onClick={() =>
+              onClick={() => {
                 setFormState((prev) => ({ ...prev, isSubmitted: false }))
-              }
+                triggerHapticFeedback();
+                reset();
+              }}
               className="px-6 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors duration-300"
             >
               Send another message

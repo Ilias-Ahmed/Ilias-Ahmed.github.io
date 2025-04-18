@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic, MicOff } from "lucide-react";
 import { toast } from "sonner";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 // Define proper types for Speech Recognition
 interface SpeechRecognitionEvent extends Event {
@@ -192,7 +193,10 @@ const VoiceNavigation = () => {
     <>
       <motion.button
         className="fixed bottom-24 left-8 z-40 p-3 rounded-full bg-cyberpunk-dark/70 border border-cyberpunk-pink hover:bg-cyberpunk-dark interactive shadow-lg shadow-cyberpunk-pink/20 backdrop-blur-sm"
-        onClick={toggleListening}
+        onClick={() => {
+          toggleListening();
+          triggerHapticFeedback();
+        }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         aria-label={isListening ? "Stop listening" : "Start voice command"}

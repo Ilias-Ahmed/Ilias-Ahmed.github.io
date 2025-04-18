@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Skill } from "./types";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface GridViewProps {
   skills: Skill[];
@@ -58,7 +59,10 @@ const GridView = ({
               className="relative group"
               onMouseEnter={() => setHoveredSkill(skill.id)}
               onMouseLeave={() => setHoveredSkill(null)}
-              onClick={() => setSelectedSkill(skill)}
+              onClick={() => {
+                setSelectedSkill(skill)
+                triggerHapticFeedback();
+              }}
             >
               {/* Card Container */}
               <div
@@ -189,6 +193,7 @@ const GridView = ({
                         e.stopPropagation();
                         setViewMode("comparison");
                         setComparisonSkills([skill.id]);
+                        triggerHapticFeedback();
                       }}
                     >
                       <svg

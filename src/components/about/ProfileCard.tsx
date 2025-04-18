@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { ArrowRight, Download, Github, Linkedin, Twitter } from "lucide-react";
 import profileImage from "/images/profile.png?url"; // Adjust the path as necessary
 import ResumeViewer from "../ui/ResumeViewer";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 const ProfileCard = () => {
   const [isFlipped, setIsFlipped] = useState(false);
@@ -74,7 +75,10 @@ const ProfileCard = () => {
           {/* Card with flip effect */}
           <div
             className="relative w-full h-[450px] perspective-3d cursor-pointer"
-            onClick={() => setIsFlipped(!isFlipped)}
+            onClick={() => {
+              setIsFlipped(!isFlipped);
+              triggerHapticFeedback();
+            }}
             style={{ perspective: "1000px" }}
           >
             <motion.div
@@ -277,7 +281,10 @@ const ProfileCard = () => {
             </motion.a>
 
             <motion.button
-              onClick={() => setShowResume(true)}
+              onClick={() => {
+                setShowResume(true);
+                triggerHapticFeedback();
+              }}
               className="px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-full flex items-center gap-2 transition-all"
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.98 }}
@@ -319,10 +326,7 @@ const ProfileCard = () => {
       </motion.div>
 
       {/* Resume Viewer Modal */}
-      <ResumeViewer
-        isOpen={showResume}
-        onClose={() => setShowResume(false)}
-      />
+      <ResumeViewer isOpen={showResume} onClose={() => setShowResume(false)} />
     </div>
   );
 };

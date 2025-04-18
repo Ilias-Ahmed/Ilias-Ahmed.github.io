@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Skill, MasteryLevel } from "./types";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface MasteryViewProps {
   skills: Skill[];
@@ -60,7 +61,10 @@ const MasteryView = ({ skills, setSelectedSkill }: MasteryViewProps) => {
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3, delay: 0.1 + index * 0.05 }}
                     className="bg-white dark:bg-gray-800 bg-opacity-50 dark:bg-opacity-50 backdrop-filter backdrop-blur-sm rounded-lg p-4 border border-gray-300 dark:border-gray-700 hover:border-purple-500 transition-all cursor-pointer"
-                    onClick={() => setSelectedSkill(skill)}
+                    onClick={() => {
+                      setSelectedSkill(skill);
+                      triggerHapticFeedback();
+                    }}
                   >
                     <div className="flex items-center">
                       <div

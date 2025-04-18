@@ -7,6 +7,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useNavigation } from "@/contexts/NavigationContext";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 const DotsNavigation: React.FC = () => {
   const { activeSection, sections, navigateToSection } = useNavigation();
@@ -31,7 +32,10 @@ const DotsNavigation: React.FC = () => {
             <TooltipTrigger asChild>
               <motion.button
                 className="interactive focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 rounded-full p-1"
-                onClick={() => navigateToSection(section.id)}
+                onClick={() => {
+                  navigateToSection(section.id)
+                  triggerHapticFeedback();
+                }}
                 onKeyDown={(e) => handleKeyNav(e, section.id)}
                 whileHover={{ scale: 1.2 }}
                 whileTap={{ scale: 0.9 }}

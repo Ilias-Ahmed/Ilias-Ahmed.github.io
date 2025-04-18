@@ -15,6 +15,7 @@ import {
 import { Skill, DistributionData } from "./types";
 import { skills as allSkills, categories } from "./skillsData";
 import { useTheme } from "@/contexts/ThemeContext";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface ComparisonViewProps {
   comparisonSkills: string[];
@@ -115,12 +116,14 @@ const ComparisonView = ({
           {allSkills.map((skill) => (
             <motion.button
               key={skill.id}
-              className={`p-3 rounded-lg text-center transition-all ${
-                comparisonSkills.includes(skill.id)
+              className={`p-3 rounded-lg text-center transition-all ${comparisonSkills.includes(skill.id)
                   ? "bg-purple-700 text-white"
                   : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600"
-              }`}
-              onClick={() => toggleComparisonSkill(skill.id)}
+                }`}
+              onClick={() => {
+                toggleComparisonSkill(skill.id)
+                triggerHapticFeedback();
+              }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               disabled={
@@ -153,7 +156,10 @@ const ComparisonView = ({
                   >
                     <button
                       className="absolute top-2 right-2 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-white"
-                      onClick={() => toggleComparisonSkill(skill.id)}
+                      onClick={() => {
+                        toggleComparisonSkill(skill.id)
+                        triggerHapticFeedback();
+                      }}
                     >
                       <svg
                         className="w-5 h-5"
@@ -449,7 +455,10 @@ const ComparisonView = ({
                                 if (name === "projects")
                                   return [`${numericValue / 10}`, "Projects"];
                                 if (name === "experience")
-                                  return [`${numericValue / 20} years`, "Experience"];
+                                  return [
+                                    `${numericValue / 20} years`,
+                                    "Experience",
+                                  ];
                                 return [value, name];
                               }}
                               contentStyle={{
@@ -520,7 +529,9 @@ const ComparisonView = ({
                                 );
                                 if (!skill) return null;
 
-                                const value = (row as Record<string, number | string>)[skill.name];
+                                const value = (
+                                  row as Record<string, number | string>
+                                )[skill.name];
                                 let displayValue = value;
 
                                 // Format the value based on the metric
