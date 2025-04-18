@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProjectCard from "./ProjectCard";
 import { Project } from "./types";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface ProjectShowcaseProps {
   projects: Project[];
@@ -72,7 +73,10 @@ const ProjectShowcase = ({ projects }: ProjectShowcaseProps) => {
     <div className="relative h-[600px] mb-16">
       <div className="absolute inset-x-0 top-1/2 flex justify-between items-center z-20 px-4 md:px-10">
         <motion.button
-          onClick={goToPrev}
+          onClick={() => {
+            goToPrev()
+            triggerHapticFeedback();
+          }}
           className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
           whileHover={{ scale: 1.1, backgroundColor: "rgba(0,0,0,0.5)" }}
           whileTap={{ scale: 0.95 }}
@@ -81,7 +85,10 @@ const ProjectShowcase = ({ projects }: ProjectShowcaseProps) => {
         </motion.button>
 
         <motion.button
-          onClick={goToNext}
+          onClick={() => {
+            goToNext();
+            triggerHapticFeedback();
+           }}
           className="w-12 h-12 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white border border-white/10"
           whileHover={{ scale: 1.1, backgroundColor: "rgba(0,0,0,0.5)" }}
           whileTap={{ scale: 0.95 }}
@@ -129,6 +136,7 @@ const ProjectShowcase = ({ projects }: ProjectShowcaseProps) => {
             onClick={() => {
               setDirection(index > currentIndex ? 1 : -1);
               setCurrentIndex(index);
+              triggerHapticFeedback();
             }}
             className={`w-3 h-3 rounded-full ${
               index === currentIndex ? "bg-primary" : "bg-white/30"

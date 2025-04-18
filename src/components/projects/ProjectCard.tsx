@@ -2,6 +2,7 @@ import { useState, useRef } from "react";
 import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
 import { Github, ExternalLink, Info } from "lucide-react";
 import { Project } from "./types";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface ProjectCardProps {
   project: Project;
@@ -201,7 +202,10 @@ const ProjectCard = ({
             )}
 
             <motion.button
-              onClick={() => setShowDetails(true)}
+              onClick={() => {
+                setShowDetails(true)
+                triggerHapticFeedback();
+              }}
               className="w-9 h-9 flex items-center justify-center bg-white/10 rounded-full hover:bg-white/20 transition-colors"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -249,14 +253,20 @@ const ProjectCard = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setShowDetails(false)}
+            onClick={() => {
+              setShowDetails(false)
+              triggerHapticFeedback();
+            }}
           >
             <motion.div
               className="bg-secondary/90 backdrop-blur-md rounded-2xl p-6 w-full max-w-3xl max-h-[90vh] overflow-auto"
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation()
+                triggerHapticFeedback()
+              }}
             >
               <div className="relative h-64 rounded-xl overflow-hidden mb-6">
                 <img
@@ -342,7 +352,10 @@ const ProjectCard = ({
                 </div>
 
                 <button
-                  onClick={() => setShowDetails(false)}
+                  onClick={() => {
+                    setShowDetails(false)
+                    triggerHapticFeedback();
+                  }}
                   className="text-gray-400 hover:text-white"
                 >
                   Close

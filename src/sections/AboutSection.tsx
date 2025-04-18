@@ -3,6 +3,7 @@ import CertificationsGallery from "@/components/about/CertificationsGallery";
 import ExperienceTimeline from "@/components/about/ExperienceTimeline";
 import ProfileCard from "@/components/about/ProfileCard";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { triggerHapticFeedback } from "@/utils/haptics";
 import { useSpring, animated } from "@react-spring/web";
 import { AnimatePresence, motion, useInView } from "framer-motion";
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -250,7 +251,10 @@ const AboutSection = () => {
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.98 }}
           className="text-center cursor-pointer p-6 mt-20 opacity-60 hover:opacity-100 transition-opacity"
-          onClick={handleEasterEggClick}
+          onClick={() => {
+            handleEasterEggClick()
+            triggerHapticFeedback()
+           }}
           role="button"
           tabIndex={0}
           aria-label="Discover Easter Egg"

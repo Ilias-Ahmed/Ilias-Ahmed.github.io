@@ -1,3 +1,4 @@
+import { triggerHapticFeedback } from "@/utils/haptics";
 import { useEffect, useRef } from "react";
 
 interface TextGlitchProps {
@@ -53,7 +54,10 @@ const TextGlitch: React.FC<TextGlitchProps> = ({ text, className = "" }) => {
       className={className}
       onMouseEnter={startGlitch}
       onClick={startGlitch}
-      onTouchStart={startGlitch}
+      onTouchStart={() => {
+        startGlitch();
+        triggerHapticFeedback();
+      }}
     >
       {text}
     </h2>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { timelineData } from "./aboutData";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface ExperienceTimelineProps {
   timelineData: typeof timelineData;
@@ -29,7 +30,10 @@ const ExperienceTimeline = ({ timelineData }: ExperienceTimelineProps) => {
                     ? "bg-secondary/50 border-l-2 border-primary/50"
                     : "bg-secondary/30 hover:bg-secondary/50"
                 }`}
-                onClick={() => setActiveItem(index)}
+                onClick={() => {
+                  setActiveItem(index);
+                  triggerHapticFeedback();
+                }}
                 onMouseEnter={() => setHoveredItem(index)}
                 onMouseLeave={() => setHoveredItem(null)}
                 whileHover={{ x: 5 }}

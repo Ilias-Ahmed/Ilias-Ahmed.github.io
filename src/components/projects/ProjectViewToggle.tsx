@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ViewMode } from "./types";
 import { Layers, Grid3X3, Clock } from "lucide-react";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface ProjectViewToggleProps {
   activeView: ViewMode;
@@ -37,7 +38,10 @@ const ProjectViewToggle = ({
           <Button
             key={option.id}
             variant="ghost"
-            onClick={() => onChange(option.id)}
+            onClick={() => {
+              onChange(option.id)
+              triggerHapticFeedback();
+            }}
             className={`relative px-6 py-2 rounded-full transition-all duration-300 ${
               activeView === option.id
                 ? "text-white"

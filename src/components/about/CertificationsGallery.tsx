@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { CertificationItem } from "./aboutData";
+import { triggerHapticFeedback } from "@/utils/haptics";
 interface CertificationsGalleryProps {
   certifications: CertificationItem[];
 }
@@ -104,12 +105,14 @@ const CertificationsGallery = ({
         {certifications.map((_, index) => (
           <button
             key={index}
+
             className={`w-3 h-3 rounded-full transition-all ${
               activeIndex === index
                 ? "bg-primary scale-125"
                 : "bg-gray-600 hover:bg-gray-500"
-            }`}
+              }`}
             onClick={() => {
+              triggerHapticFeedback();
               setActiveIndex(index);
               if (scrollRef.current) {
                 scrollRef.current.scrollTo({

@@ -1,393 +1,387 @@
-import React, { useEffect, useState, useRef } from "react";
-import { useLocation, Link } from "react-router-dom";
-import { motion, useMotionValue, useTransform, AnimatePresence } from "framer-motion";
-import { AugmentedRealityOverlay, BiometricScanner, CyberneticCountdown, DNAAuthentication, HolographicTerminal, NeuralNetworkVisualization, Scene3D } from "@/components/notFound";
+import { triggerHapticFeedback } from "@/utils/haptics";
+import { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+
+interface Particle {
+  id: string;
+  x: number;
+  y: number;
+  size: number;
+  color: string;
+  velocity: {
+    x: number;
+    y: number;
+  };
+  life: number;
+}
 
 const NotFound: React.FC = () => {
-  const location = useLocation();
-  const [count, setCount] = useState(5);
-  const [isGlitching, setIsGlitching] = useState(false);
-  const [biometricVerified, setBiometricVerified] = useState(false);
-  const [dnaVerified, setDnaVerified] = useState(false);
-  const [showEmergencyProtocol, setShowEmergencyProtocol] = useState(false);
-  const [mousePosition, setMousePosition] = useState<[number, number] | null>(
-    null
-  );
-  const [showFallback, setShowFallback] = useState(false);
+  // State for interactive elements
+  const [cursorPosition, setCursorPosition] = useState<{
+    x: number;
+    y: number;
+  }>({ x: 0, y: 0 });
+  const [isGlitching, setIsGlitching] = useState<boolean>(false);
+  const [showPortal, setShowPortal] = useState<boolean>(false);
+  const [portalEnergy, setPortalEnergy] = useState<number>(0);
+  const [particles, setParticles] = useState<Particle[]>([]);
+  const [errorCode, setErrorCode] = useState<string>("404");
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const portalRef = useRef<HTMLCanvasElement | null>(null);
 
-  // Mouse tracking for 3D effect
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-
-  // Transform mouse position for parallax effects
-  const rotateX = useTransform(mouseY, [-300, 300], [5, -5]);
-  const rotateY = useTransform(mouseX, [-300, 300], [-5, 5]);
-
-  // Refs for cleanup
-  const timersRef = useRef<{
-    countdown: NodeJS.Timeout | null;
-    glitch: NodeJS.Timeout | null;
-    emergency: NodeJS.Timeout | null;
-  }>({
-    countdown: null,
-    glitch: null,
-    emergency: null,
-  });
-
+  // Handle mouse movement for interactive effects
   useEffect(() => {
-    // Try to catch any errors with Three.js
-    try {
-      // Log error for analytics
-      console.error(
-        "404 Error: User attempted to access non-existent route:",
-        location.pathname
+    const handleMouseMove = (e: MouseEvent) => {
+      setCursorPosition({
+        x: e.clientX,
+        y: e.clientY,
+      });
+
+      // Generate particles on mouse move
+      if (Math.random() > 0.7) {
+        const newParticle: Particle = {
+          id: Date.now() + Math.random().toString(),
+          x: e.clientX,
+          y: e.clientY,
+          size: Math.random() * 5 + 2,
+          color: `hsl(${Math.random() * 60 + 240}, 100%, 70%)`,
+          velocity: {
+            x: (Math.random() - 0.5) * 3,
+            y: (Math.random() - 0.5) * 3,
+          },
+          life: 100,
+        };
+
+        setParticles((prev) => [...prev, newParticle]);
+      }
+    };
+
+    // Random glitch effect
+    const glitchInterval = setInterval(() => {
+      setIsGlitching(true);
+      setErrorCode(
+        Math.random() > 0.8
+          ? ["404", "4○4", "40¤", "4Ø4", "ᗣᗣᗣ"][Math.floor(Math.random() * 5)]
+          : "404"
       );
 
-      // Mouse move handler
-      const handleMouseMove = (e: MouseEvent) => {
-        const x = e.clientX - window.innerWidth / 2;
-        const y = e.clientY - window.innerHeight / 2;
+      setTimeout(() => setIsGlitching(false), 150);
+    }, 3000);
 
-        mouseX.set(x);
-        mouseY.set(y);
-        setMousePosition([x / window.innerWidth, y / window.innerHeight]);
-      };
+    // Increase portal energy over time
+    const portalInterval = setInterval(() => {
+      setPortalEnergy((prev) => {
+        const newValue = Math.min(prev + 1, 100);
+        if (newValue === 100 && !showPortal) {
+          setShowPortal(true);
+        }
+        return newValue;
+      });
+    }, 100);
 
-      window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousemove", handleMouseMove);
 
-      // Countdown timer WITHOUT auto-redirect
-      timersRef.current.countdown = setInterval(() => {
-        setCount((prevCount) => {
-          if (prevCount <= 1) {
-            if (timersRef.current.countdown) {
-              clearInterval(timersRef.current.countdown);
-            }
-            // No navigation here - removed the auto-redirect
-            return 0;
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      clearInterval(glitchInterval);
+      clearInterval(portalInterval);
+    };
+  }, [showPortal]);
+
+  // Update particles
+  useEffect(() => {
+    if (particles.length === 0) return;
+
+    const timer = setTimeout(() => {
+      setParticles((prev) =>
+        prev
+          .map((p) => ({
+            ...p,
+            x: p.x + p.velocity.x,
+            y: p.y + p.velocity.y,
+            life: p.life - 1,
+            size: p.size * 0.98,
+          }))
+          .filter((p) => p.life > 0)
+      );
+    }, 16);
+
+    return () => clearTimeout(timer);
+  }, [particles]);
+
+  // Portal animation
+  useEffect(() => {
+    if (!showPortal || !portalRef.current) return;
+
+    const ctx = portalRef.current.getContext("2d");
+    if (!ctx) return;
+
+    let animationFrame: number;
+    let angle = 0;
+
+    const drawPortal = () => {
+      const width = portalRef.current?.width || 0;
+      const height = portalRef.current?.height || 0;
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Draw portal
+      const gradient = ctx.createRadialGradient(
+        centerX,
+        centerY,
+        10,
+        centerX,
+        centerY,
+        150
+      );
+
+      gradient.addColorStop(0, "rgba(147, 51, 234, 0.9)");
+      gradient.addColorStop(0.5, "rgba(79, 70, 229, 0.6)");
+      gradient.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, 150, 0, Math.PI * 2);
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Draw swirling effect
+      for (let i = 0; i < 5; i++) {
+        const spiralAngle = angle + (i * Math.PI) / 2.5;
+        const spiralRadius = 20 + i * 25;
+
+        ctx.beginPath();
+        for (let j = 0; j < 30; j++) {
+          const pointAngle = spiralAngle + j * 0.2;
+          const pointRadius = spiralRadius - j * 0.5;
+          const x = centerX + Math.cos(pointAngle) * pointRadius;
+          const y = centerY + Math.sin(pointAngle) * pointRadius;
+
+          if (j === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
           }
-          return prevCount - 1;
-        });
-      }, 1000);
+        }
 
-      // Random glitch effect
-      timersRef.current.glitch = setInterval(() => {
-        setIsGlitching(true);
-        setTimeout(() => setIsGlitching(false), 200);
-      }, 3000);
+        ctx.strokeStyle = `hsla(${260 + i * 15}, 100%, 70%, 0.7)`;
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
 
-      // Show emergency protocol after delay
-      timersRef.current.emergency = setTimeout(() => {
-        setShowEmergencyProtocol(true);
-      }, 2000);
+      angle += 0.02;
+      animationFrame = requestAnimationFrame(drawPortal);
+    };
 
-      // Cleanup function
-      return () => {
-        window.removeEventListener("mousemove", handleMouseMove);
+    drawPortal();
 
-        // Clear all timers
-        if (timersRef.current.countdown)
-          clearInterval(timersRef.current.countdown);
-        if (timersRef.current.glitch) clearInterval(timersRef.current.glitch);
-        if (timersRef.current.emergency)
-          clearTimeout(timersRef.current.emergency);
-      };
-    } catch (error) {
-      console.error("Error in NotFound component:", error);
-      setShowFallback(true);
-    }
-  }, [location.pathname, mouseX, mouseY]);
+    return () => {
+      cancelAnimationFrame(animationFrame);
+    };
+  }, [showPortal]);
 
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        delayChildren: 0.2,
-        staggerChildren: 0.1,
-      },
-    },
-  };
+  // Digital noise canvas effect
+  useEffect(() => {
+    if (!canvasRef.current) return;
 
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-    },
-  };
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
 
-  // Fallback simple 404 page if there are errors with Three.js
-  if (showFallback) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black p-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-md w-full bg-gray-800/80 backdrop-blur-lg p-8 rounded-xl border border-purple-500/30 shadow-xl"
-        >
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-white mb-2">
-              Page Not Found
-            </h1>
-            <div className="w-20 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto mb-6"></div>
+    let animationFrame: number;
 
-            <p className="text-gray-300 mb-6">
-              The page you're looking for doesn't exist or has been moved to
-              another location.
-            </p>
+    const resizeCanvas = () => {
+      if (canvas) {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+    };
 
-            <div className="text-sm text-pink-400 font-mono mb-8 p-2 bg-black/30 rounded border border-pink-500/20 inline-block">
-              ERROR 404: {location.pathname}
-            </div>
-          </div>
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
 
-          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <Link to="/">
-              <motion.button
-                className="w-full sm:w-auto px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg
-                          shadow-lg hover:shadow-xl transition-all duration-300"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Return to Home
-              </motion.button>
-            </Link>
+    const drawNoise = () => {
+      // Only draw when glitching
+      if (isGlitching && canvas) {
+        const imageData = ctx.createImageData(canvas.width, canvas.height);
+        const data = imageData.data;
 
-            <motion.button
-              className="w-full sm:w-auto px-6 py-2 bg-transparent text-purple-400 font-medium rounded-lg
-                        border border-purple-500/30 hover:border-purple-500/70 transition-all duration-300"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => window.history.back()}
-            >
-              Go Back
-            </motion.button>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
+        for (let i = 0; i < data.length; i += 4) {
+          const noise = Math.random() > 0.99;
+          const value = noise ? 255 : 0;
+
+          data[i] = value * (Math.random() > 0.5 ? 1 : 0); // R
+          data[i + 1] = value * (Math.random() > 0.5 ? 1 : 0); // G
+          data[i + 2] = value; // B
+          data[i + 3] = noise ? 50 : 0; // A
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+      } else if (canvas) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      animationFrame = requestAnimationFrame(drawNoise);
+    };
+
+    drawNoise();
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      window.removeEventListener("resize", resizeCanvas);
+    };
+  }, [isGlitching]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 via-purple-900/20 to-black overflow-hidden relative">
-      {/* Neural Network Background */}
-      <NeuralNetworkVisualization isGlitching={isGlitching} />
+    <div className="relative w-full h-screen overflow-hidden bg-black text-white flex items-center justify-center">
+      {/* Background canvas for digital noise */}
+      <canvas
+        ref={canvasRef}
+        className="absolute top-0 left-0 w-full h-full pointer-events-none z-10"
+      />
 
-      {/* 3D Scene */}
-      <div className="absolute inset-0 z-0">
-        {/* Wrap in error boundary */}
-        <ErrorCatcher>
-          <Scene3D isGlitching={isGlitching} mousePosition={mousePosition} />
-        </ErrorCatcher>
+      {/* Particle effects */}
+      <div className="absolute inset-0 pointer-events-none z-20">
+        {particles.map((particle) => (
+          <div
+            key={particle.id}
+            className="absolute rounded-full"
+            style={{
+              left: `${particle.x}px`,
+              top: `${particle.y}px`,
+              width: `${particle.size}px`,
+              height: `${particle.size}px`,
+              backgroundColor: particle.color,
+              opacity: particle.life / 100,
+              transform: `scale(${particle.life / 100})`,
+              boxShadow: `0 0 ${particle.size * 2}px ${particle.color}`,
+            }}
+          />
+        ))}
       </div>
 
-      {/* Augmented Reality Overlay */}
-      <AugmentedRealityOverlay isGlitching={isGlitching} />
-
-      {/* Main content card with glassmorphism */}
-      <motion.div
-        className="relative z-10 max-w-2xl w-full mx-4"
+      {/* Grid lines */}
+      <div
+        className="absolute inset-0 z-0"
         style={{
-          rotateX: rotateX,
-          rotateY: rotateY,
+          backgroundImage: `
+            linear-gradient(to right, rgba(99, 102, 241, 0.1) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(99, 102, 241, 0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: "50px 50px",
+          backgroundPosition: "center center",
         }}
-        initial="hidden"
-        animate="visible"
-        variants={containerVariants}
+      />
+
+      {/* Circular glow following cursor */}
+      <div
+        className="absolute pointer-events-none z-0 rounded-full opacity-20 transition-transform duration-300"
+        style={{
+          width: "300px",
+          height: "300px",
+          left: `${cursorPosition.x - 150}px`,
+          top: `${cursorPosition.y - 150}px`,
+          background:
+            "radial-gradient(circle, rgba(139, 92, 246, 0.8) 0%, rgba(0, 0, 0, 0) 70%)",
+          transform: isGlitching ? "scale(1.2)" : "scale(1)",
+        }}
+      />
+
+      {/* Main content */}
+      <div
+        className={`relative z-30 max-w-2xl w-full mx-4 text-center ${
+          isGlitching ? "translate-x-[3px]" : ""
+        }`}
+        style={{
+          transition: "transform 0.1s",
+          transform: `perspective(1000px) rotateX(${
+            (cursorPosition.y - window.innerHeight / 2) / 50
+          }deg) rotateY(${
+            -(cursorPosition.x - window.innerWidth / 2) / 50
+          }deg)`,
+        }}
       >
-        <motion.div
-          className={`
-            bg-gray-900/70 backdrop-blur-xl p-8 rounded-2xl
-            border border-purple-500/30 shadow-2xl
-            ${isGlitching ? "glitch-effect" : ""}
-          `}
-          animate={{
-            boxShadow: isGlitching
-              ? [
-                  "0 0 20px rgba(139, 92, 246, 0.5)",
-                  "0 0 40px rgba(236, 72, 153, 0.7)",
-                  "0 0 20px rgba(139, 92, 246, 0.5)",
-                ]
-              : "0 0 20px rgba(139, 92, 246, 0.5)",
+        {/* Error code */}
+        <h1
+          className={`text-9xl font-bold mb-6 tracking-tighter ${
+            isGlitching ? "text-red-500" : "text-indigo-500"
+          }`}
+          style={{
+            textShadow: `0 0 20px ${isGlitching ? "#ef4444" : "#6366f1"}`,
+            fontFamily: "monospace",
           }}
         >
-          <motion.div className="text-center mb-8" variants={itemVariants}>
-            <motion.h1
-              className="text-4xl font-bold mb-2 text-white font-display"
-              variants={itemVariants}
-            >
-              SYSTEM BREACH DETECTED
-            </motion.h1>
-
-            <motion.div
-              className="w-32 h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto mb-6"
-              variants={itemVariants}
-            />
-
-            <motion.p className="text-gray-300 mb-4" variants={itemVariants}>
-              The neural pathway you're attempting to access has been corrupted
-              or doesn't exist.
-            </motion.p>
-
-            <motion.div
-              className="text-sm text-pink-400 font-mono mb-6 p-2 bg-black/30 rounded border border-pink-500/20 inline-block"
-              variants={itemVariants}
-            >
-              <motion.span
-                animate={{
-                  opacity: isGlitching ? [1, 0, 1, 0, 1] : 1,
-                  x: isGlitching ? [-2, 2, -1, 1, 0] : 0,
-                }}
-                transition={{ duration: 0.5 }}
-              >
-                ERROR 404: {location.pathname}
-              </motion.span>
-            </motion.div>
-          </motion.div>
-
-          {/* Terminal and Authentication Section */}
-          <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"
-            variants={itemVariants}
-          >
-            {/* Left Column - Terminal */}
-            <motion.div variants={itemVariants}>
-              <HolographicTerminal
-                pathAttempted={location.pathname}
-                countdown={count}
-              />
-            </motion.div>
-
-            {/* Right Column - Authentication */}
-            <motion.div
-              className="flex flex-col space-y-6"
-              variants={itemVariants}
-            >
-              <BiometricScanner onComplete={() => setBiometricVerified(true)} />
-              <DNAAuthentication onComplete={() => setDnaVerified(true)} />
-            </motion.div>
-          </motion.div>
-
-          {/* Emergency Protocol Section - Updated text */}
-          <AnimatePresence>
-            {showEmergencyProtocol && (
-              <motion.div
-                className="border border-red-500/30 rounded-lg p-4 bg-black/30 mb-8"
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                transition={{ duration: 0.5 }}
-              >
-                <motion.div
-                  className="flex items-center justify-between mb-2"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <div className="text-red-500 font-mono text-sm font-bold flex items-center">
-                    <motion.div
-                      className="w-2 h-2 bg-red-500 rounded-full mr-2"
-                      animate={{ opacity: [1, 0.3, 1] }}
-                      transition={{ duration: 1, repeat: Infinity }}
-                    />
-                    EMERGENCY PROTOCOL ACTIVATED
-                  </div>
-                  <CyberneticCountdown
-                    count={count}
-                    isGlitching={isGlitching}
-                  />
-                </motion.div>
-
-                <motion.div
-                  className="text-sm text-gray-400"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.5 }}
-                >
-                  <p>
-                    Please use the navigation options below to return to a safe
-                    node.
-                  </p>
-                  <div className="mt-2 flex items-center">
-                    <div className="text-xs text-gray-500 mr-2">
-                      SECURITY STATUS:
-                    </div>
-                    <div
-                      className={`text-xs ${
-                        biometricVerified && dnaVerified
-                          ? "text-green-500"
-                          : "text-yellow-500"
-                      }`}
-                    >
-                      {biometricVerified && dnaVerified
-                        ? "FULLY AUTHENTICATED"
-                        : biometricVerified || dnaVerified
-                        ? "PARTIAL AUTHENTICATION"
-                        : "AUTHENTICATION REQUIRED"}
-                    </div>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Action Buttons */}
-          <motion.div
-            className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4"
-            variants={itemVariants}
-          >
-            <Link to="/">
-              <motion.button
-                className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg
-                          shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1
-                          border border-purple-500/50 relative overflow-hidden group"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {/* Button glow effect */}
-                <motion.span
-                  className="absolute inset-0 w-full h-full bg-gradient-to-r from-purple-600/0 via-white/80 to-pink-600/0"
-                  initial={{ x: "-100%", opacity: 0 }}
-                  animate={{ x: "100%", opacity: 0.5 }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 1.5,
-                    ease: "easeInOut",
-                    repeatDelay: 0.5,
-                  }}
-                />
-
-                <span className="relative z-10 flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5 mr-2"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-                    />
-                  </svg>
-                  <span>Return to Home</span>
-                </span>
-              </motion.button>
-            </Link>
-
-            <motion.button
-              className="w-full sm:w-auto px-8 py-3 bg-transparent text-purple-400 font-medium rounded-lg
-                        border border-purple-500/30 hover:border-purple-500/70 transition-all duration-300"
-              whileHover={{
-                scale: 1.05,
-                backgroundColor: "rgba(139, 92, 246, 0.1)",
+          {errorCode.split("").map((char, i) => (
+            <span
+              key={i}
+              className="inline-block"
+              style={{
+                animation: isGlitching
+                  ? `glitch-${i % 3} 0.3s infinite`
+                  : "none",
+                position: "relative",
+                transform: isGlitching
+                  ? `translateY(${Math.sin(i) * 5}px)`
+                  : "none",
               }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => window.history.back()}
             >
-              <span className="flex items-center justify-center">
+              {char}
+            </span>
+          ))}
+        </h1>
+
+        {/* Message */}
+        <div
+          className={`mb-8 backdrop-blur-sm bg-black/30 p-6 rounded-lg border ${
+            isGlitching ? "border-red-500/50" : "border-indigo-500/50"
+          }`}
+        >
+          <h2 className="text-2xl font-bold mb-4">Reality Breach Detected</h2>
+          <p className="text-gray-300 mb-4">
+            The dimensional coordinates you're attempting to access don't exist
+            in this reality.
+          </p>
+          <div className="text-sm font-mono p-2 bg-black/50 rounded inline-block">
+            <span className={isGlitching ? "text-red-400" : "text-indigo-400"}>
+              LOCATION_NOT_FOUND: {window.location.pathname}
+            </span>
+          </div>
+        </div>
+
+        {/* Portal energy meter */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-mono text-indigo-300">
+              DIMENSIONAL PORTAL
+            </span>
+            <span className="text-xs font-mono text-indigo-300">
+              {portalEnergy}%
+            </span>
+          </div>
+          <div className="h-2 bg-black/50 rounded-full overflow-hidden border border-indigo-500/30">
+            <div
+              className="h-full bg-gradient-to-r from-indigo-600 to-purple-600 transition-all duration-300"
+              style={{ width: `${portalEnergy}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+          <Link to="/">
+            <button
+              className={`
+                px-8 py-3 rounded-lg font-medium transition-all duration-300 transform hover:-translate-y-1
+                ${
+                  showPortal
+                    ? "bg-purple-600 text-white"
+                    : "bg-indigo-600 text-white"
+                }
+                border border-indigo-400/50 relative overflow-hidden group
+              `}
+            >
+              <span className="relative z-10 flex items-center justify-center">
                 <svg
                   className="w-5 h-5 mr-2"
                   fill="none"
@@ -398,161 +392,234 @@ const NotFound: React.FC = () => {
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth={2}
-                    d="M11 17l-5-5m0 0l5-5m-5 5h12"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
                   />
                 </svg>
-                <span>Go Back</span>
+                <span>{showPortal ? "Enter Portal" : "Return Home"}</span>
               </span>
-            </motion.button>
-          </motion.div>
-        </motion.div>
 
-        {/* Decorative circuit lines */}
-        <svg
-          className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10"
-          viewBox="0 0 400 300"
-          fill="none"
-        >
-          <motion.path
-            d="M0,150 C100,50 300,250 400,150"
-            stroke="url(#purpleGradient)"
-            strokeWidth="0.5"
-            strokeDasharray="5,5"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 0.3 }}
-            transition={{ duration: 2, ease: "easeInOut" }}
+              {/* Button glow effect */}
+              <span
+                className="absolute inset-0 w-full h-full bg-gradient-to-r from-indigo-600/0 via-white/30 to-purple-600/0"
+                style={{
+                  transform: "translateX(-100%)",
+                }}
+              />
+            </button>
+          </Link>
+
+          <button
+            className="px-8 py-3 bg-transparent text-indigo-400 font-medium rounded-lg
+                      border border-indigo-500/30 hover:border-indigo-500/70 transition-all duration-300 hover:bg-indigo-500/10"
+            onClick={() => {
+              window.history.back()
+              triggerHapticFeedback()
+            }}
+          >
+            <span className="flex items-center justify-center">
+              <svg
+                className="w-5 h-5 mr-2"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 17l-5-5m0 0l5-5m-5 5h12"
+                />
+              </svg>
+              <span>Go Back</span>
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Portal effect */}
+      {showPortal && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-25">
+          <canvas
+            ref={portalRef}
+            width={500}
+            height={500}
+            className="absolute"
           />
-          <motion.path
-            d="M0,100 C150,200 250,0 400,100"
-            stroke="url(#pinkGradient)"
-            strokeWidth="0.5"
-            strokeDasharray="5,5"
-            initial={{ pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 0.3 }}
-            transition={{ duration: 2, ease: "easeInOut", delay: 0.5 }}
-          />
-          <defs>
-            <linearGradient
-              id="purpleGradient"
-              x1="0%"
-              y1="0%"
-              x2="100%"
-              y2="0%"
-            >
-              <stop offset="0%" stopColor="#8B5CF6" stopOpacity="0" />
-              <stop offset="50%" stopColor="#8B5CF6" />
-              <stop offset="100%" stopColor="#8B5CF6" stopOpacity="0" />
-            </linearGradient>
-            <linearGradient id="pinkGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#EC4899" stopOpacity="0" />
-              <stop offset="50%" stopColor="#EC4899" />
-              <stop offset="100%" stopColor="#EC4899" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-        </svg>
-      </motion.div>
+        </div>
+      )}
+
+      {/* Floating binary/hex data */}
+      <div className="absolute inset-0 overflow-hidden opacity-20 pointer-events-none z-5">
+        {Array.from({ length: 10 }).map((_, i) => (
+          <div
+            key={i}
+            className="absolute text-xs font-mono whitespace-nowrap text-indigo-500"
+            style={{
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              opacity: 0.7,
+            }}
+          >
+            {Array.from({ length: 20 }, () =>
+              Math.random() > 0.5
+                ? Math.round(Math.random()).toString()
+                : "0123456789ABCDEF"[Math.floor(Math.random() * 16)]
+            ).join("")}
+          </div>
+        ))}
+      </div>
 
       {/* Scan line effect */}
-      <motion.div
-        className="fixed inset-0 pointer-events-none z-40 opacity-10"
+      <div
+        className="absolute inset-0 pointer-events-none z-40 opacity-10"
         style={{
           backgroundImage:
             "repeating-linear-gradient(0deg, rgba(255,255,255,0.1), rgba(255,255,255,0.1) 1px, transparent 1px, transparent 2px)",
+          backgroundSize: "100% 4px",
         }}
       />
 
-      {/* Glitch overlay effect */}
-      <motion.div
-        className="fixed inset-0 pointer-events-none z-50 mix-blend-overlay"
-        animate={{
-          opacity: isGlitching ? [0, 0.05, 0.02, 0.03, 0] : 0,
-        }}
-        style={{
-          backgroundImage:
-            'url("data:image/png;base64,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")',
-          backgroundSize: "200px 200px",
-        }}
-      />
-
-      {/* Binary code background for cyberpunk effect */}
-      <div className="absolute inset-0 overflow-hidden opacity-5 pointer-events-none">
-        {Array.from({ length: 15 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="text-xs text-purple-500 font-mono whitespace-nowrap"
-            style={{
-              position: "absolute",
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-            }}
-            initial={{ opacity: 0, y: -100 }}
-            animate={{
-              opacity: [0, 0.8, 0],
-              y: [0, window.innerHeight],
-            }}
-            transition={{
-              duration: Math.random() * 20 + 10,
-              repeat: Infinity,
-              ease: "linear",
-              delay: Math.random() * 5,
-            }}
+      {/* Circuit board traces */}
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-20"
+        style={{ filter: "blur(1px)" }}
+      >
+        <defs>
+          <linearGradient
+            id="circuitGradient"
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="0%"
           >
-            {Array.from({ length: 20 }, () => Math.round(Math.random())).join(
-              ""
-            )}
-          </motion.div>
-        ))}
-      </div>
+            <stop offset="0%" stopColor="#6366f1" stopOpacity="0.1" />
+            <stop offset="50%" stopColor="#8b5cf6" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#6366f1" stopOpacity="0.1" />
+          </linearGradient>
+        </defs>
 
-      {/* Floating data particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 rounded-full bg-purple-500"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              opacity: [0, 1, 0],
-              scale: [0, 1.5, 0],
-              y: [0, -20, 0],
-              x: [0, Math.random() * 20 - 10, 0],
-            }}
-            transition={{
-              duration: Math.random() * 3 + 2,
-              repeat: Infinity,
-              delay: Math.random() * 5,
-            }}
-          />
-        ))}
-      </div>
+        <path
+          d="M0,150 C100,50 300,250 400,150 M0,100 C150,200 250,0 400,100 M50,0 C200,150 100,300 350,200"
+          stroke="url(#circuitGradient)"
+          strokeWidth="1"
+          fill="none"
+          strokeDasharray="5,5"
+        />
+
+        {/* Circuit nodes */}
+        {Array.from({ length: 15 }).map((_, i) => {
+          const x = Math.random() * 100;
+          const y = Math.random() * 100;
+          return (
+            <circle
+              key={i}
+              cx={`${x}%`}
+              cy={`${y}%`}
+              r="3"
+              fill="#8b5cf6"
+              opacity="0.6"
+            />
+          );
+        })}
+      </svg>
+
+      <style>{`
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+
+        @keyframes pulse {
+          0%,
+          100% {
+            opacity: 0.2;
+          }
+          50% {
+            opacity: 0.8;
+          }
+        }
+
+        @keyframes scan {
+          0% {
+            background-position: 0 0;
+          }
+          100% {
+            background-position: 0 100%;
+          }
+        }
+
+        @keyframes float-y {
+          0% {
+            transform: translateY(100vh);
+          }
+          100% {
+            transform: translateY(-100%);
+          }
+        }
+
+        @keyframes glitch-0 {
+          0%,
+          100% {
+            transform: translate(0);
+          }
+          20% {
+            transform: translate(-2px, 2px);
+          }
+          40% {
+            transform: translate(-2px, -2px);
+          }
+          60% {
+            transform: translate(2px, 2px);
+          }
+          80% {
+            transform: translate(2px, -2px);
+          }
+        }
+
+        @keyframes glitch-1 {
+          0%,
+          100% {
+            transform: translate(0);
+          }
+          20% {
+            transform: translate(2px, -2px);
+          }
+          40% {
+            transform: translate(2px, 2px);
+          }
+          60% {
+            transform: translate(-2px, -2px);
+          }
+          80% {
+            transform: translate(-2px, 2px);
+          }
+        }
+
+        @keyframes glitch-2 {
+          0%,
+          100% {
+            transform: translate(0);
+          }
+          20% {
+            transform: translate(-1px, 1px);
+          }
+          40% {
+            transform: translate(1px, 1px);
+          }
+          60% {
+            transform: translate(1px, -1px);
+          }
+          80% {
+            transform: translate(-1px, -1px);
+          }
+        }
+      `}</style>
     </div>
   );
 };
 
-// Simple error catcher component
-const ErrorCatcher: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
-  const [hasError, setHasError] = useState(false);
-
-  useEffect(() => {
-    const handleError = () => {
-      setHasError(true);
-    };
-
-    window.addEventListener("error", handleError);
-    return () => window.removeEventListener("error", handleError);
-  }, []);
-
-  if (hasError) {
-    return null;
-  }
-
-  return <>{children}</>;
-};
-
 export default NotFound;
-

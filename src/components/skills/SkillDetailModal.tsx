@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Skill } from "./types";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface SkillDetailModalProps {
   selectedSkill: Skill | null;
@@ -27,46 +28,77 @@ const SkillDetailModal = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-        onClick={() => setSelectedSkill(null)}
+        onClick={() => {
+          setSelectedSkill(null)
+          triggerHapticFeedback();
+        }}
       >
         <motion.div
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 20 }}
           className="bg-gray-900 rounded-xl p-6 max-w-2xl w-full border border-gray-700 shadow-2xl"
-          onClick={e => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            triggerHapticFeedback();
+          }}
         >
           <div className="flex justify-between items-start mb-6">
             <div className="flex items-center">
               <div
                 className="w-14 h-14 flex items-center justify-center rounded-lg mr-4 text-3xl"
-                style={{ backgroundColor: `${selectedSkill.color}20`, color: selectedSkill.color }}
+                style={{
+                  backgroundColor: `${selectedSkill.color}20`,
+                  color: selectedSkill.color,
+                }}
               >
                 {selectedSkill.icon}
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-white">{selectedSkill.name}</h3>
+                <h3 className="text-2xl font-bold text-white">
+                  {selectedSkill.name}
+                </h3>
                 <div className="flex items-center">
-                  <span className="text-gray-400">{selectedSkill.category}</span>
+                  <span className="text-gray-400">
+                    {selectedSkill.category}
+                  </span>
                   <span className="mx-2 text-gray-600">•</span>
-                  <span className="text-gray-400">{selectedSkill.level}% Proficiency</span>
+                  <span className="text-gray-400">
+                    {selectedSkill.level}% Proficiency
+                  </span>
                 </div>
               </div>
             </div>
 
             <button
               className="text-gray-400 hover:text-white transition-colors"
-              onClick={() => setSelectedSkill(null)}
+              onClick={() => {
+                setSelectedSkill(null)
+                triggerHapticFeedback();
+              }}
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                ></path>
               </svg>
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <div>
-              <h4 className="text-lg font-medium text-white mb-3">Skill Overview</h4>
+              <h4 className="text-lg font-medium text-white mb-3">
+                Skill Overview
+              </h4>
               <p className="text-gray-300 mb-4">{selectedSkill.description}</p>
 
               <div className="space-y-4">
@@ -89,27 +121,48 @@ const SkillDetailModal = ({
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-gray-800 rounded-lg p-3">
                     <div className="text-gray-400 text-sm mb-1">Projects</div>
-                    <div className="text-2xl font-bold text-white">{selectedSkill.projects}</div>
+                    <div className="text-2xl font-bold text-white">
+                      {selectedSkill.projects}
+                    </div>
                   </div>
 
                   <div className="bg-gray-800 rounded-lg p-3">
                     <div className="text-gray-400 text-sm mb-1">Experience</div>
-                    <div className="text-2xl font-bold text-white">{selectedSkill.yearsExperience} years</div>
+                    <div className="text-2xl font-bold text-white">
+                      {selectedSkill.yearsExperience} years
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
 
             <div>
-              <h4 className="text-lg font-medium text-white mb-3">Skill Breakdown</h4>
+              <h4 className="text-lg font-medium text-white mb-3">
+                Skill Breakdown
+              </h4>
 
               <div className="space-y-3">
                 {/* These would be real metrics in a production app */}
                 {[
-                  { name: "Problem Solving", value: Math.round(selectedSkill.level * 0.9) },
-                  { name: "Code Quality", value: Math.round(selectedSkill.level * 1.1) > 100 ? 100 : Math.round(selectedSkill.level * 1.1) },
-                  { name: "Best Practices", value: Math.round(selectedSkill.level * 0.95) },
-                  { name: "Performance Optimization", value: Math.round(selectedSkill.level * 0.85) }
+                  {
+                    name: "Problem Solving",
+                    value: Math.round(selectedSkill.level * 0.9),
+                  },
+                  {
+                    name: "Code Quality",
+                    value:
+                      Math.round(selectedSkill.level * 1.1) > 100
+                        ? 100
+                        : Math.round(selectedSkill.level * 1.1),
+                  },
+                  {
+                    name: "Best Practices",
+                    value: Math.round(selectedSkill.level * 0.95),
+                  },
+                  {
+                    name: "Performance Optimization",
+                    value: Math.round(selectedSkill.level * 0.85),
+                  },
                 ].map((metric) => (
                   <div key={metric.name}>
                     <div className="flex justify-between text-sm mb-1">
@@ -120,7 +173,7 @@ const SkillDetailModal = ({
                       <motion.div
                         className="h-full rounded-full"
                         style={{
-                          background: `linear-gradient(90deg, ${selectedSkill.color}80, ${selectedSkill.color})`
+                          background: `linear-gradient(90deg, ${selectedSkill.color}80, ${selectedSkill.color})`,
                         }}
                         initial={{ width: 0 }}
                         animate={{ width: `${metric.value}%` }}
@@ -132,42 +185,66 @@ const SkillDetailModal = ({
               </div>
 
               <div className="mt-6">
-                <h4 className="text-lg font-medium text-white mb-3">Related Skills</h4>
+                <h4 className="text-lg font-medium text-white mb-3">
+                  Related Skills
+                </h4>
                 <div className="flex flex-wrap gap-2">
                   {skills
-                    .filter(skill =>
-                      skill.category === selectedSkill.category &&
-                      skill.id !== selectedSkill.id
+                    .filter(
+                      (skill) =>
+                        skill.category === selectedSkill.category &&
+                        skill.id !== selectedSkill.id
                     )
                     .slice(0, 4)
-                    .map(skill => (
+                    .map((skill) => (
                       <button
                         key={skill.id}
                         className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-full text-sm text-gray-300 transition-colors"
-                        onClick={() => setSelectedSkill(skill)}
+                        onClick={() => {
+                          setSelectedSkill(skill)
+                          triggerHapticFeedback();
+                        }}
                       >
                         {skill.name}
                       </button>
-                    ))
-                  }
+                    ))}
                 </div>
               </div>
             </div>
           </div>
 
           <div className="pt-4 border-t border-gray-700">
-            <h4 className="text-lg font-medium text-white mb-3">Skill Timeline</h4>
+            <h4 className="text-lg font-medium text-white mb-3">
+              Skill Timeline
+            </h4>
             <div className="relative h-20">
               <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-gray-700 -translate-y-1/2"></div>
 
               {/* Timeline points - these would be real milestones in a production app */}
               {[
-                { year: `${new Date().getFullYear() - selectedSkill.yearsExperience}`, label: "Started Learning" },
-                { year: `${new Date().getFullYear() - Math.round(selectedSkill.yearsExperience * 0.7)}`, label: "First Project" },
-                { year: `${new Date().getFullYear() - Math.round(selectedSkill.yearsExperience * 0.3)}`, label: "Professional Use" },
-                { year: `${new Date().getFullYear()}`, label: "Current" }
+                {
+                  year: `${
+                    new Date().getFullYear() - selectedSkill.yearsExperience
+                  }`,
+                  label: "Started Learning",
+                },
+                {
+                  year: `${
+                    new Date().getFullYear() -
+                    Math.round(selectedSkill.yearsExperience * 0.7)
+                  }`,
+                  label: "First Project",
+                },
+                {
+                  year: `${
+                    new Date().getFullYear() -
+                    Math.round(selectedSkill.yearsExperience * 0.3)
+                  }`,
+                  label: "Professional Use",
+                },
+                { year: `${new Date().getFullYear()}`, label: "Current" },
               ].map((point, index, array) => {
-                const position = index / (array.length - 1) * 100;
+                const position = (index / (array.length - 1)) * 100;
 
                 return (
                   <motion.div
@@ -197,6 +274,7 @@ const SkillDetailModal = ({
                   setSelectedSkill(null);
                   setViewMode("comparison");
                   setComparisonSkills([selectedSkill.id]);
+                  triggerHapticFeedback();
                 }}
               >
                 Compare with Others
@@ -205,7 +283,10 @@ const SkillDetailModal = ({
 
             <button
               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-              onClick={() => setSelectedSkill(null)}
+              onClick={() => {
+                setSelectedSkill(null)
+                triggerHapticFeedback();
+              }}
             >
               Close
             </button>

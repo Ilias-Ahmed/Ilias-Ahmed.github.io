@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ViewMode } from "./types";
 import { categories } from "./skillsData";
 import { useState } from "react";
+import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface SkillsFiltersProps {
   viewMode: ViewMode;
@@ -58,7 +59,10 @@ const SkillsFilters = ({
               ? "text-white dark:text-white"
               : "text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
           }`}
-          onClick={() => setViewMode("grid")}
+          onClick={() => {
+            setViewMode("grid");
+            triggerHapticFeedback();
+          }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -90,7 +94,10 @@ const SkillsFilters = ({
               ? "text-white dark:text-white"
               : "text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
           }`}
-          onClick={() => setViewMode("mastery")}
+          onClick={() => {
+            setViewMode("mastery");
+            triggerHapticFeedback();
+          }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -122,7 +129,10 @@ const SkillsFilters = ({
               ? "text-white dark:text-white"
               : "text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
           }`}
-          onClick={handleComparisonView}
+          onClick={() => {
+            handleComparisonView();
+            triggerHapticFeedback();
+          }}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -164,14 +174,20 @@ const SkillsFilters = ({
             {popularCombinations.map((combo, index) => (
               <button
                 key={index}
-                onClick={() => handleQuickSelect(combo.skills)}
+                onClick={() => {
+                  handleQuickSelect(combo.skills);
+                  triggerHapticFeedback();
+                }}
                 className="px-3 py-1.5 text-xs rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800/40 transition-colors"
               >
                 {combo.name}
               </button>
             ))}
             <button
-              onClick={() => setShowQuickSelect(false)}
+              onClick={() => {
+                setShowQuickSelect(false);
+                triggerHapticFeedback();
+              }}
               className="px-3 py-1.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
             >
               Close
@@ -215,7 +231,10 @@ const SkillsFilters = ({
                 ? "text-white dark:text-white"
                 : "text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
             }`}
-            onClick={() => setSelectedCategory("All")}
+            onClick={() => {
+              setSelectedCategory("All");
+              triggerHapticFeedback();
+            }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -238,7 +257,10 @@ const SkillsFilters = ({
                   ? "text-white dark:text-white"
                   : "text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
               }`}
-              onClick={() => setSelectedCategory(category)}
+              onClick={() => {
+                setSelectedCategory(category);
+                triggerHapticFeedback();
+              }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -270,7 +292,10 @@ const SkillsFilters = ({
             Select up to 3 skills to compare their proficiency levels, projects,
             and experience.
             <button
-              onClick={() => setShowQuickSelect(!showQuickSelect)}
+              onClick={() => {
+                setShowQuickSelect(!showQuickSelect);
+                triggerHapticFeedback();
+              }}
               className="ml-2 underline text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300"
             >
               Quick select popular combinations
@@ -283,4 +308,3 @@ const SkillsFilters = ({
 };
 
 export default SkillsFilters;
-
