@@ -211,7 +211,7 @@ const ComparisonContent = ({
     experience: number;
     color: string;
   }>;
-  comparisonData: Array<Record<string, any>>;
+  comparisonData: Array<Record<string, string | number>>;
   accentColor: string;
   theme: string;
 }) => {
