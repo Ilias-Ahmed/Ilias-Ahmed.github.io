@@ -40,9 +40,9 @@ const ProfileCard = () => {
   const skills = ["React", "Node.js", "TypeScript", "GraphQL", "AWS", "UI/UX"];
 
   const quickFacts = [
-    { icon: "🌍", title: "Location", content: "San Francisco, CA" },
-    { icon: "🎓", title: "Education", content: "Computer Science, Stanford" },
-    { icon: "🌱", title: "Learning", content: "AI/ML & Cloud Architecture" },
+    { icon: "🌍", title: "Location", content: "India, Assam" },
+    { icon: "🎓", title: "Education", content: "BCA, Gauhati University" },
+    { icon: "🌱", title: "Learning", content: "Fullstack Developer" },
     {
       icon: "🎯",
       title: "Goal",
@@ -51,10 +51,10 @@ const ProfileCard = () => {
   ];
 
   const stats = [
-    { number: "6+", label: "Years Experience" },
+    { number: "3+", label: "Years Experience" },
     { number: "50+", label: "Projects Completed" },
-    { number: "30+", label: "Happy Clients" },
-    { number: "12+", label: "Open Source Contributions" },
+    { number: "15+", label: "Happy Clients" },
+    { number: "10+", label: "Open Source Contributions" },
   ];
 
   return (
