@@ -1,17 +1,24 @@
 import { useState, useRef } from "react";
 import { motion, useInView } from "framer-motion";
-import { Skill, ViewMode } from "../components/skills/types";
-import { skills } from "../components/skills/skillsData";
-import SkillsFilters from "../components/skills/SkillsFilters";
-import GridView from "../components/skills/GridView";
-import MasteryView from "../components/skills/MasteryView";
-import ComparisonView from "../components/skills/ComparisonView";
-import SkillDetailModal from "../components/skills/SkillDetailModal";
-import SkillVisualization from "../components/skills/SkillVisualization";
+import { Skill, ViewMode } from "./types";
+import { skills } from "./skillsData";
+import SkillsFilters from "./SkillsFilters";
+import GridView from "./GridView";
+import MasteryView from "./MasteryView";
+import ComparisonView from "./ComparisonView";
+import SkillDetailModal from "./SkillDetailModal";
+import SkillVisualization from "./SkillVisualization";
 
+/**
+ * SkillsSection component displays a comprehensive view of technical skills
+ * with different visualization modes and interactive features.
+ */
 const SkillsSection = () => {
-  const ref = useRef(null);
+  // Animation and visibility tracking
+  const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, amount: 0.1 });
+
+  // State management
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [selectedSkill, setSelectedSkill] = useState<Skill | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -20,26 +27,28 @@ const SkillsSection = () => {
   const [comparisonSkills, setComparisonSkills] = useState<string[]>([]);
 
   // Filter skills based on category and search query
-  const filteredSkills = skills.filter(skill => {
-    const matchesCategory = selectedCategory === "All" || skill.category === selectedCategory;
-    const matchesSearch = skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        skill.category.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredSkills = skills.filter((skill) => {
+    const matchesCategory =
+      selectedCategory === "All" || skill.category === selectedCategory;
+    const matchesSearch =
+      skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      skill.category.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
-  // For the comparison view
+  // Toggle a skill for comparison view
   const toggleComparisonSkill = (skillId: string) => {
-    if (comparisonSkills.includes(skillId)) {
-      setComparisonSkills(comparisonSkills.filter(id => id !== skillId));
-    } else {
-      if (comparisonSkills.length < 3) {
-        setComparisonSkills([...comparisonSkills, skillId]);
-      }
-    }
+    setComparisonSkills((prev) =>
+      prev.includes(skillId)
+        ? prev.filter((id) => id !== skillId)
+        : prev.length < 3
+        ? [...prev, skillId]
+        : prev
+    );
   };
 
   return (
-    <div className="py-10 px-4 sm:px-6 relative" id="skills">
+    <section className="py-10 px-4 sm:px-6 relative" id="skills">
       <div className="max-w-7xl mx-auto">
         <motion.div
           ref={ref}
@@ -52,11 +61,12 @@ const SkillsSection = () => {
             Technical Expertise
           </h2>
           <p className="text-lg text-gray-300 max-w-2xl mx-auto">
-            My toolkit of technologies and methodologies, continuously refined through practical application and ongoing learning.
+            My toolkit of technologies and methodologies, continuously refined
+            through practical application and ongoing learning.
           </p>
         </motion.div>
 
-        {/* New Visual Skills Representation */}
+        {/* Visual Skills Representation */}
         <SkillVisualization skills={skills} className="mb-16" />
 
         {/* Filters Component */}
@@ -70,7 +80,7 @@ const SkillsSection = () => {
           setComparisonSkills={setComparisonSkills}
         />
 
-        {/* View Components */}
+        {/* View Components - Conditionally rendered based on viewMode */}
         {viewMode === "grid" && (
           <GridView
             skills={filteredSkills}
@@ -98,7 +108,7 @@ const SkillsSection = () => {
           />
         )}
 
-        {/* Skill Detail Modal */}
+        {/* Skill Detail Modal - Appears when a skill is selected */}
         <SkillDetailModal
           selectedSkill={selectedSkill}
           setSelectedSkill={setSelectedSkill}
@@ -108,7 +118,7 @@ const SkillsSection = () => {
           skills={skills}
         />
       </div>
-    </div>
+    </section>
   );
 };
 

@@ -1,5 +1,8 @@
 import { Skill } from "./types";
 
+/**
+ * Collection of skills with their detailed information
+ */
 export const skills: Skill[] = [
   {
     id: "react",
@@ -8,9 +11,10 @@ export const skills: Skill[] = [
     category: "Frontend",
     icon: "⚛️",
     color: "#61dafb",
-    description: "Building complex UIs with React hooks, context, and modern patterns",
+    description:
+      "Building complex UIs with React hooks, context, and modern patterns",
     projects: 24,
-    yearsExperience: 4
+    yearsExperience: 4,
   },
   {
     id: "typescript",
@@ -21,7 +25,7 @@ export const skills: Skill[] = [
     color: "#3178c6",
     description: "Type-safe development with advanced TypeScript features",
     projects: 20,
-    yearsExperience: 3
+    yearsExperience: 3,
   },
   {
     id: "nodejs",
@@ -32,7 +36,7 @@ export const skills: Skill[] = [
     color: "#68a063",
     description: "Server-side JavaScript with Express, APIs, and microservices",
     projects: 18,
-    yearsExperience: 3
+    yearsExperience: 3,
   },
   {
     id: "mongodb",
@@ -41,9 +45,10 @@ export const skills: Skill[] = [
     category: "Backend",
     icon: "🍃",
     color: "#13aa52",
-    description: "NoSQL database design, aggregation pipelines, and optimization",
+    description:
+      "NoSQL database design, aggregation pipelines, and optimization",
     projects: 15,
-    yearsExperience: 2
+    yearsExperience: 2,
   },
   {
     id: "graphql",
@@ -52,9 +57,10 @@ export const skills: Skill[] = [
     category: "Backend",
     icon: "◯",
     color: "#e535ab",
-    description: "Schema design, resolvers, and Apollo Server/Client implementation",
+    description:
+      "Schema design, resolvers, and Apollo Server/Client implementation",
     projects: 10,
-    yearsExperience: 2
+    yearsExperience: 2,
   },
   {
     id: "threejs",
@@ -65,9 +71,8 @@ export const skills: Skill[] = [
     color: "#000000",
     description: "3D graphics and animations for web applications",
     projects: 8,
-    yearsExperience: 1
+    yearsExperience: 1,
   },
-
   {
     id: "docker",
     name: "Docker",
@@ -77,10 +82,10 @@ export const skills: Skill[] = [
     color: "#2496ed",
     description: "Containerization, Docker Compose, and deployment strategies",
     projects: 14,
-    yearsExperience: 2
+    yearsExperience: 2,
   },
   {
-    id: "Tailwind CSS",
+    id: "tailwind",
     name: "Tailwind CSS/CSS",
     level: 85,
     category: "Frontend",
@@ -88,7 +93,7 @@ export const skills: Skill[] = [
     color: "#264de4",
     description: "Responsive design, animations, and modern CSS techniques",
     projects: 22,
-    yearsExperience: 4
+    yearsExperience: 4,
   },
   {
     id: "git",
@@ -97,9 +102,10 @@ export const skills: Skill[] = [
     category: "DevOps",
     icon: "📦",
     color: "#f05032",
-    description: "Version control, branching strategies, and collaborative workflows",
+    description:
+      "Version control, branching strategies, and collaborative workflows",
     projects: 30,
-    yearsExperience: 5
+    yearsExperience: 5,
   },
   {
     id: "webgl",
@@ -110,8 +116,13 @@ export const skills: Skill[] = [
     color: "#990000",
     description: "Low-level graphics programming for web applications",
     projects: 5,
-    yearsExperience: 1
+    yearsExperience: 1,
   },
 ];
 
-export const categories = Array.from(new Set(skills.map(skill => skill.category)));
+/**
+ * Unique categories extracted from skills
+ */
+export const categories = Array.from(
+  new Set(skills.map((skill) => skill.category))
+);

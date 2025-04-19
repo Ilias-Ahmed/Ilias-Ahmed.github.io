@@ -1,25 +1,99 @@
+import { memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Skill } from "./types";
+import { Skill, ViewMode } from "./types";
 import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface SkillDetailModalProps {
   selectedSkill: Skill | null;
   setSelectedSkill: (skill: Skill | null) => void;
-  viewMode: "grid" | "mastery" | "comparison";
-  setViewMode: (mode: "grid" | "mastery" | "comparison") => void;
+  viewMode: ViewMode;
+  setViewMode: (mode: ViewMode) => void;
   setComparisonSkills: (skills: string[]) => void;
   skills: Skill[];
 }
 
+/**
+ * SkillDetailModal displays detailed information about a selected skill
+ */
 const SkillDetailModal = ({
   selectedSkill,
   setSelectedSkill,
   viewMode,
   setViewMode,
   setComparisonSkills,
-  skills
+  skills,
 }: SkillDetailModalProps) => {
   if (!selectedSkill) return null;
+
+  // Handle closing the modal
+  const handleClose = () => {
+    setSelectedSkill(null);
+    triggerHapticFeedback();
+  };
+
+  // Handle comparison button click
+  const handleCompare = () => {
+    setSelectedSkill(null);
+    setViewMode("comparison");
+    setComparisonSkills([selectedSkill.id]);
+    triggerHapticFeedback();
+  };
+
+  // Generate skill metrics for visualization
+  const generateSkillMetrics = (skill: Skill) => [
+    {
+      name: "Problem Solving",
+      value: Math.round(skill.level * 0.9),
+    },
+    {
+      name: "Code Quality",
+      value: Math.min(100, Math.round(skill.level * 1.1)),
+    },
+    {
+      name: "Best Practices",
+      value: Math.round(skill.level * 0.95),
+    },
+    {
+      name: "Performance Optimization",
+      value: Math.round(skill.level * 0.85),
+    },
+  ];
+
+  // Generate timeline points
+  const generateTimelinePoints = (skill: Skill) => [
+    {
+      year: `${new Date().getFullYear() - skill.yearsExperience}`,
+      label: "Started Learning",
+    },
+    {
+      year: `${
+        new Date().getFullYear() - Math.round(skill.yearsExperience * 0.7)
+      }`,
+      label: "First Project",
+    },
+    {
+      year: `${
+        new Date().getFullYear() - Math.round(skill.yearsExperience * 0.3)
+      }`,
+      label: "Professional Use",
+    },
+    {
+      year: `${new Date().getFullYear()}`,
+      label: "Current",
+    },
+  ];
+
+  // Get related skills
+  const relatedSkills = skills
+    .filter(
+      (skill) =>
+        skill.category === selectedSkill.category &&
+        skill.id !== selectedSkill.id
+    )
+    .slice(0, 4);
+
+  const skillMetrics = generateSkillMetrics(selectedSkill);
+  const timelinePoints = generateTimelinePoints(selectedSkill);
 
   return (
     <AnimatePresence>
@@ -28,20 +102,14 @@ const SkillDetailModal = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-        onClick={() => {
-          setSelectedSkill(null)
-          triggerHapticFeedback();
-        }}
+        onClick={handleClose}
       >
         <motion.div
           initial={{ scale: 0.9, y: 20 }}
           animate={{ scale: 1, y: 0 }}
           exit={{ scale: 0.9, y: 20 }}
           className="bg-gray-900 rounded-xl p-6 max-w-2xl w-full border border-gray-700 shadow-2xl"
-          onClick={(e) => {
-            e.stopPropagation()
-            triggerHapticFeedback();
-          }}
+          onClick={(e) => e.stopPropagation()}
         >
           <div className="flex justify-between items-start mb-6">
             <div className="flex items-center">
@@ -72,10 +140,8 @@ const SkillDetailModal = ({
 
             <button
               className="text-gray-400 hover:text-white transition-colors"
-              onClick={() => {
-                setSelectedSkill(null)
-                triggerHapticFeedback();
-              }}
+              onClick={handleClose}
+              aria-label="Close modal"
             >
               <svg
                 className="w-6 h-6"
@@ -142,28 +208,7 @@ const SkillDetailModal = ({
               </h4>
 
               <div className="space-y-3">
-                {/* These would be real metrics in a production app */}
-                {[
-                  {
-                    name: "Problem Solving",
-                    value: Math.round(selectedSkill.level * 0.9),
-                  },
-                  {
-                    name: "Code Quality",
-                    value:
-                      Math.round(selectedSkill.level * 1.1) > 100
-                        ? 100
-                        : Math.round(selectedSkill.level * 1.1),
-                  },
-                  {
-                    name: "Best Practices",
-                    value: Math.round(selectedSkill.level * 0.95),
-                  },
-                  {
-                    name: "Performance Optimization",
-                    value: Math.round(selectedSkill.level * 0.85),
-                  },
-                ].map((metric) => (
+                {skillMetrics.map((metric) => (
                   <div key={metric.name}>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-gray-300">{metric.name}</span>
@@ -189,25 +234,18 @@ const SkillDetailModal = ({
                   Related Skills
                 </h4>
                 <div className="flex flex-wrap gap-2">
-                  {skills
-                    .filter(
-                      (skill) =>
-                        skill.category === selectedSkill.category &&
-                        skill.id !== selectedSkill.id
-                    )
-                    .slice(0, 4)
-                    .map((skill) => (
-                      <button
-                        key={skill.id}
-                        className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-full text-sm text-gray-300 transition-colors"
-                        onClick={() => {
-                          setSelectedSkill(skill)
-                          triggerHapticFeedback();
-                        }}
-                      >
-                        {skill.name}
-                      </button>
-                    ))}
+                  {relatedSkills.map((skill) => (
+                    <button
+                      key={skill.id}
+                      className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-full text-sm text-gray-300 transition-colors"
+                      onClick={() => {
+                        setSelectedSkill(skill);
+                        triggerHapticFeedback();
+                      }}
+                    >
+                      {skill.name}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -220,30 +258,8 @@ const SkillDetailModal = ({
             <div className="relative h-20">
               <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-gray-700 -translate-y-1/2"></div>
 
-              {/* Timeline points - these would be real milestones in a production app */}
-              {[
-                {
-                  year: `${
-                    new Date().getFullYear() - selectedSkill.yearsExperience
-                  }`,
-                  label: "Started Learning",
-                },
-                {
-                  year: `${
-                    new Date().getFullYear() -
-                    Math.round(selectedSkill.yearsExperience * 0.7)
-                  }`,
-                  label: "First Project",
-                },
-                {
-                  year: `${
-                    new Date().getFullYear() -
-                    Math.round(selectedSkill.yearsExperience * 0.3)
-                  }`,
-                  label: "Professional Use",
-                },
-                { year: `${new Date().getFullYear()}`, label: "Current" },
-              ].map((point, index, array) => {
+              {/* Timeline points */}
+              {timelinePoints.map((point, index, array) => {
                 const position = (index / (array.length - 1)) * 100;
 
                 return (
@@ -270,12 +286,7 @@ const SkillDetailModal = ({
             {viewMode !== "comparison" && (
               <button
                 className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
-                onClick={() => {
-                  setSelectedSkill(null);
-                  setViewMode("comparison");
-                  setComparisonSkills([selectedSkill.id]);
-                  triggerHapticFeedback();
-                }}
+                onClick={handleCompare}
               >
                 Compare with Others
               </button>
@@ -283,10 +294,7 @@ const SkillDetailModal = ({
 
             <button
               className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-              onClick={() => {
-                setSelectedSkill(null)
-                triggerHapticFeedback();
-              }}
+              onClick={handleClose}
             >
               Close
             </button>
@@ -297,4 +305,5 @@ const SkillDetailModal = ({
   );
 };
 
-export default SkillDetailModal;
+export default memo(SkillDetailModal);
+

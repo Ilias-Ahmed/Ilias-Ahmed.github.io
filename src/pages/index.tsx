@@ -14,7 +14,7 @@ const LoadingScreen = React.lazy(() => import("@/components/ui/LoadingScreen"));
 
 // Lazy-loaded sections
 const AboutSection = React.lazy(() => import("@/sections/AboutSection"));
-const SkillsSection = React.lazy(() => import("@/sections/SkillsSection"));
+const SkillsSection = React.lazy(() => import("@/components/skills"));
 const ProjectsSection = React.lazy(() => import("@/sections/ProjectsSection"));
 const ContactSection = React.lazy(() => import("@/sections/ContactSection"));
 
