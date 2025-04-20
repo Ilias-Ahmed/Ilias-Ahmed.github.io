@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, Suspense, useMemo } from "react";
-import Hero from "@/sections/Hero";
+import Hero from "@/pages/Hero";
 import ScrollProgressBar from "@/components/ui/ScrollProgressBar";
 import { NavigationProvider } from "@/contexts/NavigationContext";
 import Navigation from "@/components/navigation/Navigation";
@@ -13,10 +13,10 @@ const Toaster = React.lazy(() =>
 const LoadingScreen = React.lazy(() => import("@/components/ui/LoadingScreen"));
 
 // Lazy-loaded sections
-const AboutSection = React.lazy(() => import("@/sections/AboutSection"));
-const SkillsSection = React.lazy(() => import("@/sections/SkillsSection"));
-const ProjectsSection = React.lazy(() => import("@/sections/ProjectsSection"));
-const ContactSection = React.lazy(() => import("@/sections/ContactSection"));
+const AboutSection = React.lazy(() => import("@/components/about"));
+const SkillsSection = React.lazy(() => import("@/components/skills"));
+const ProjectsSection = React.lazy(() => import("@/components/projects"));
+const ContactSection = React.lazy(() => import("@/components/contact"));
 
 /**
  * Main Index component - Optimized for performance

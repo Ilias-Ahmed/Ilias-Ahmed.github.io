@@ -1,7 +1,7 @@
-import { certifications, timelineData } from "@/components/about/aboutData";
-import CertificationsGallery from "@/components/about/CertificationsGallery";
-import ExperienceTimeline from "@/components/about/ExperienceTimeline";
-import ProfileCard from "@/components/about/ProfileCard";
+import { certifications, timelineData } from "./aboutData";
+import CertificationsGallery from "./CertificationsGallery";
+import ExperienceTimeline from "./ExperienceTimeline";
+import ProfileCard from "./ProfileCard";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { useSpring, animated } from "@react-spring/web";
@@ -32,13 +32,14 @@ const AboutSection = () => {
 
   // Improved mouse move handler with validation
   const handleMouseMove = useCallback(
-        (e: React.MouseEvent<HTMLElement>) => {
-          if (!e) return;
+    (e: React.MouseEvent<HTMLElement>) => {
+      if (!e) return;
 
-          const x = (e.clientX / window.innerWidth) * 2 - 1;
-          const y = (e.clientY / window.innerHeight) * 2 - 1;
-          api.start({ offset: [x * 15, y * 15] });
-        },    [api]
+      const x = (e.clientX / window.innerWidth) * 2 - 1;
+      const y = (e.clientY / window.innerHeight) * 2 - 1;
+      api.start({ offset: [x * 15, y * 15] });
+    },
+    [api]
   );
 
   // Animation variants
@@ -252,9 +253,9 @@ const AboutSection = () => {
           whileTap={{ scale: 0.98 }}
           className="text-center cursor-pointer p-6 mt-20 opacity-60 hover:opacity-100 transition-opacity"
           onClick={() => {
-            handleEasterEggClick()
-            triggerHapticFeedback()
-           }}
+            handleEasterEggClick();
+            triggerHapticFeedback();
+          }}
           role="button"
           tabIndex={0}
           aria-label="Discover Easter Egg"

@@ -1,6 +1,10 @@
 import { StrictMode, lazy, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
+import { initEmailJS } from "./utils/emailjs";
+
+// Initialize EmailJS
+initEmailJS();
 
 // Lazy load the main App component
 const App = lazy(() => import("./App.tsx"));

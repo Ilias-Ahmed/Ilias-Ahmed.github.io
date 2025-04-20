@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 
 type ContactInfoItem = {
   icon: React.ReactNode;
@@ -15,12 +15,6 @@ const ContactInfo = () => {
       label: "Email",
       value: "iliasahmed70023@gmail.com",
       href: "mailto:iliasahmed70023@gmail.com",
-    },
-    {
-      icon: <Phone className="w-5 h-5" />,
-      label: "Phone",
-      value: "+91 6001801937",
-      href: "tel:+91 6001801937",
     },
     {
       icon: <MapPin className="w-5 h-5" />,

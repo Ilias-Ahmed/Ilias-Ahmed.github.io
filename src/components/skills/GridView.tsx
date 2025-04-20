@@ -1,5 +1,6 @@
+import { memo } from "react";
 import { motion } from "framer-motion";
-import { Skill } from "./types";
+import { Skill, ViewMode } from "./types";
 import { triggerHapticFeedback } from "@/utils/haptics";
 
 interface GridViewProps {
@@ -7,11 +8,14 @@ interface GridViewProps {
   setSelectedSkill: (skill: Skill | null) => void;
   setHoveredSkill: (skillId: string | null) => void;
   hoveredSkill: string | null;
-  setViewMode: (mode: "grid" | "mastery" | "comparison") => void;
+  setViewMode: (mode: ViewMode) => void;
   setComparisonSkills: (skills: string[]) => void;
-  viewMode: "grid" | "mastery" | "comparison";
+  viewMode: ViewMode;
 }
 
+/**
+ * GridView component displays skills in a card grid layout
+ */
 const GridView = ({
   skills,
   setSelectedSkill,
@@ -21,6 +25,14 @@ const GridView = ({
   setComparisonSkills,
   viewMode,
 }: GridViewProps) => {
+  // Handle comparison button click
+  const handleCompareClick = (e: React.MouseEvent, skillId: string) => {
+    e.stopPropagation();
+    setViewMode("comparison");
+    setComparisonSkills([skillId]);
+    triggerHapticFeedback();
+  };
+
   return (
     <div className="max-w-6xl mx-auto">
       <div className="text-center mb-10">
@@ -35,7 +47,6 @@ const GridView = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {skills.map((skill, index) => {
-          // Check if this skill is currently hovered
           const isHovered = hoveredSkill === skill.id;
 
           return (
@@ -60,7 +71,7 @@ const GridView = ({
               onMouseEnter={() => setHoveredSkill(skill.id)}
               onMouseLeave={() => setHoveredSkill(null)}
               onClick={() => {
-                setSelectedSkill(skill)
+                setSelectedSkill(skill);
                 triggerHapticFeedback();
               }}
             >
@@ -75,7 +86,7 @@ const GridView = ({
                     : "border-gray-300 dark:border-gray-700 hover:border-purple-500 hover:-translate-y-1 hover:shadow-xl"
                 }`}
               >
-                {/* Background glow effect (enhanced when hovered) */}
+                {/* Background glow effect */}
                 <div
                   className={`absolute inset-0 bg-gradient-to-br transition-opacity duration-500 dark:block hidden ${
                     isHovered
@@ -174,7 +185,7 @@ const GridView = ({
                   </div>
                 </div>
 
-                {/* Action Buttons (more visible on hover) */}
+                {/* Action Buttons */}
                 <div
                   className={`absolute bottom-4 right-4 transition-all duration-300 flex space-x-2 ${
                     isHovered
@@ -189,12 +200,8 @@ const GridView = ({
                       className={`p-2 rounded-full text-white ${
                         isHovered ? "bg-purple-700" : "bg-purple-600"
                       }`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setViewMode("comparison");
-                        setComparisonSkills([skill.id]);
-                        triggerHapticFeedback();
-                      }}
+                      onClick={(e) => handleCompareClick(e, skill.id)}
+                      aria-label={`Compare ${skill.name} with other skills`}
                     >
                       <svg
                         className="w-4 h-4"
@@ -208,7 +215,7 @@ const GridView = ({
                   )}
                 </div>
 
-                {/* New: Highlight indicator for hovered skill */}
+                {/* Highlight indicator for hovered skill */}
                 {isHovered && (
                   <motion.div
                     className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r"
@@ -229,4 +236,5 @@ const GridView = ({
   );
 };
 
-export default GridView;
+export default memo(GridView);
+

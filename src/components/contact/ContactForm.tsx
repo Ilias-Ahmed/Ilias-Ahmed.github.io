@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Loader, CheckCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -6,6 +6,13 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { triggerHapticFeedback } from "@/utils/haptics";
+import emailjs from '@emailjs/browser';
+
+import {
+  EMAILJS_SERVICE_ID,
+  EMAILJS_TEMPLATE_ID,
+  EMAILJS_PUBLIC_KEY,
+} from "@/utils/emailjs";
 
 // Define schema with Zod
 const contactFormSchema = z.object({
@@ -21,6 +28,8 @@ const contactFormSchema = z.object({
 // Infer TypeScript type from the schema
 type ContactFormData = z.infer<typeof contactFormSchema>;
 
+
+
 const ContactForm = () => {
   const [formState, setFormState] = useState({
     isSubmitting: false,
@@ -28,6 +37,7 @@ const ContactForm = () => {
   });
 
   const [activeField, setActiveField] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   // Initialize React Hook Form with Zod validation
   const {
@@ -45,23 +55,26 @@ const ContactForm = () => {
     },
   });
 
-  const onSubmit = async () => {
+  const onSubmit = async (data: ContactFormData) => {
+    triggerHapticFeedback();
     setFormState((prev) => ({
       ...prev,
       isSubmitting: true,
     }));
 
     try {
-      // Here you would actually send the data to your backend
-      // For example:
-      // await fetch('/api/contact', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(data)
-      // });
-
-      // Simulate API call for now
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Send email using EmailJS
+      await emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_TEMPLATE_ID,
+        {
+          from_name: data.name,
+          from_email: data.email,
+          subject: data.subject || "Portfolio Contact Form",
+          message: data.message,
+        },
+        EMAILJS_PUBLIC_KEY
+      );
 
       setFormState({
         isSubmitting: false,
@@ -175,7 +188,7 @@ const ContactForm = () => {
             </p>
             <button
               onClick={() => {
-                setFormState((prev) => ({ ...prev, isSubmitted: false }))
+                setFormState((prev) => ({ ...prev, isSubmitted: false }));
                 triggerHapticFeedback();
                 reset();
               }}
@@ -200,7 +213,11 @@ const ContactForm = () => {
               <Sparkles className="w-5 h-5 text-primary ml-2 animate-pulse" />
             </h3>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form
+              ref={formRef}
+              onSubmit={handleSubmit(onSubmit)}
+              className="space-y-6"
+            >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label
@@ -337,6 +354,7 @@ const ContactForm = () => {
                 }}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                onClick={() => triggerHapticFeedback()}
               >
                 {formState.isSubmitting ? (
                   <>
