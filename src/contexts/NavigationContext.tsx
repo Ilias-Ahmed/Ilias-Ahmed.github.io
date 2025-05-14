@@ -6,6 +6,7 @@ import React, {
   useCallback,
 } from "react";
 import Lenis from "@studio-freight/lenis";
+import { scrollToElement } from "@/utils/scroll";
 
 export type NavSection = {
   name: string;
@@ -101,14 +102,15 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
 
     try {
       const lenisInstance = new Lenis({
-        duration: isMobile ? 0.8 : 1.0,
+        duration: isMobile ? 1.0 : 1.2, // Slightly increased for smoother feel
         easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         orientation: "vertical",
         gestureOrientation: "vertical",
         smoothWheel: true,
-        wheelMultiplier: 0.8,
-        touchMultiplier: 1.2,
+        wheelMultiplier: isMobile ? 1.0 : 0.8, // Adjusted for mobile
+        touchMultiplier: 1.5, // Increased for better touch response
         infinite: false,
+        smoothTouch: true, // Enable smooth touch scrolling
       });
 
       setLenis(lenisInstance);
@@ -168,7 +170,7 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     // Initial check
     handleScroll();
 
@@ -206,41 +208,14 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
         return;
       }
 
-      // If we're on mobile, ensure touch events work after scrolling
-      if (isMobile) {
-        element.style.pointerEvents = "auto";
-
-        // Set all other sections to have pointer events as well
-        document.querySelectorAll("section, [id]").forEach((el) => {
-          (el as HTMLElement).style.pointerEvents = "auto";
-        });
-      }
-
-      if (lenis) {
-        try {
-          lenis.scrollTo(element, {
-            offset: options?.offset ?? -100,
-            duration: isMobile
-              ? options?.duration || 0.8
-              : options?.duration || 1.2,
-            immediate: false,
-          });
-        } catch (error) {
-          console.error("Lenis scroll failed:", error);
-          // Fallback to standard scrolling
-          element.scrollIntoView({ behavior: "smooth" });
-        }
-      } else {
-        // Fallback to standard scrolling if lenis isn't available
-        element.scrollIntoView({ behavior: "smooth" });
-      }
+      scrollToElement(lenis, element, options);
 
       // Close menu if it's open
       if (isMenuOpen) {
         setIsMenuOpen(false);
       }
     },
-    [lenis, isMenuOpen, isMobile]
+    [lenis, isMenuOpen]
   );
 
   const toggleMenu = useCallback(() => setIsMenuOpen((prev) => !prev), []);

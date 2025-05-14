@@ -192,7 +192,7 @@ const VoiceNavigation = () => {
   return (
     <>
       <motion.button
-        className="fixed bottom-24 left-8 z-40 p-3 rounded-full bg-cyberpunk-dark/70 border border-cyberpunk-pink hover:bg-cyberpunk-dark interactive shadow-lg shadow-cyberpunk-pink/20 backdrop-blur-sm"
+        className="fixed bottom-8 left-8 z-40 p-3 rounded-full bg-cyberpunk-dark/70 border border-cyberpunk-pink hover:bg-cyberpunk-dark interactive shadow-lg shadow-cyberpunk-pink/20 backdrop-blur-sm"
         onClick={() => {
           toggleListening();
           triggerHapticFeedback();

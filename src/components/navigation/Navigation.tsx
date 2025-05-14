@@ -58,7 +58,7 @@ const Navigation: React.FC<NavigationProps> = ({
           toggleMenu();
           triggerHapticFeedback();
         }}
-        className="fixed top-6 right-6 z-[60] p-3 bg-background/80 backdrop-blur-sm border border-border rounded-full"
+        className="fixed top-8 right-8 z-[60] p-3 bg-background/80 backdrop-blur-sm shadow-2xl rounded-full"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         aria-label={isMenuOpen ? "Close Menu" : "Open Menu"}
@@ -96,7 +96,7 @@ const Navigation: React.FC<NavigationProps> = ({
             {/* Command Palette Button inside Navigation Menu */}
             {enableCommandPalette && (
               <motion.button
-                className="flex items-center space-x-2 px-4 py-2 text-white/80 hover:text-white hover:bg-white/10 rounded-md transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 hover:bg-white/10 rounded-md transition-colors"
                 onClick={() => {
                   toggleMenu();
                   setIsCommandPaletteOpen(true);
@@ -109,7 +109,7 @@ const Navigation: React.FC<NavigationProps> = ({
               >
                 <Command className="w-5 h-5" />
                 <span>Command Palette</span>
-                <span className="ml-auto text-xs bg-white/20 px-2 py-1 rounded">
+                <span className="ml-auto text-xs px-2 py-1 rounded">
                   Ctrl+K
                 </span>
               </motion.button>
