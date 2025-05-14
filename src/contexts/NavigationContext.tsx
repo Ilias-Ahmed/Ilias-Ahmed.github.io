@@ -110,7 +110,7 @@ export const NavigationProvider: React.FC<NavigationProviderProps> = ({
         wheelMultiplier: isMobile ? 1.0 : 0.8, // Adjusted for mobile
         touchMultiplier: 1.5, // Increased for better touch response
         infinite: false,
-        smoothTouch: true, // Enable smooth touch scrolling
+        // smoothTouch: true, // Removed as it is not a valid property
       });
 
       setLenis(lenisInstance);
