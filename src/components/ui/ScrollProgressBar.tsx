@@ -45,7 +45,7 @@ const ScrollProgressBar: React.FC<ScrollProgressBarProps> = ({ progress }) => {
               transformOrigin: "0%",
             }}
           />
-          <div className="absolute right-4 top-2 text-xs font-medium text-cyberpunk-purple">
+          <div className="absolute left-4 top-2 text-xs font-medium text-cyberpunk-purple">
             {scrollPercentage}%
           </div>
         </motion.div>

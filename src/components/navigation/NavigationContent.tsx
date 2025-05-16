@@ -1,8 +1,6 @@
 import React, { useRef, useEffect, ReactNode } from "react";
 import { motion } from "framer-motion";
 import {
-  Moon,
-  Sun,
   Home,
   Code,
   Workflow,
@@ -17,6 +15,9 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { triggerHapticFeedback } from "@/utils/haptics";
+
+// Define the AccentColor type to match what's expected in ThemeContext
+type AccentColor = "purple" | "blue" | "pink";
 
 interface NavigationContentProps {
   children?: ReactNode;
@@ -106,6 +107,17 @@ const NavigationContent: React.FC<NavigationContentProps> = ({ children }) => {
     contact: <Mail size={18} />,
   };
 
+  // Define accent color options with proper typing
+  const accentOptions: Array<{
+    color: AccentColor;
+    icon: React.ReactNode;
+    bgColor: string;
+  }> = [
+    { color: "purple", icon: <Zap size={16} />, bgColor: "bg-purple-500" },
+    { color: "blue", icon: <Bolt size={16} />, bgColor: "bg-blue-500" },
+    { color: "pink", icon: <Flame size={16} />, bgColor: "bg-pink-500" },
+  ];
+
   return (
     <motion.div
       className="fixed inset-0 z-50 backdrop-blur-sm bg-background/80 dark:bg-background/80"
@@ -121,22 +133,9 @@ const NavigationContent: React.FC<NavigationContentProps> = ({ children }) => {
         aria-modal="true"
         aria-label="Main Navigation"
       >
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <motion.h2
-            className="text-xl font-bold text-primary"
-            variants={itemVariants}
-          >
-            Menu
-          </motion.h2>
-        </div>
-
         <ScrollArea className="flex-grow">
           <div className="p-4 space-y-6">
             <motion.div variants={itemVariants} className="space-y-1">
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                Navigation
-              </h3>
-
               {sections.map((section) => (
                 <motion.button
                   key={section.id}
@@ -144,7 +143,7 @@ const NavigationContent: React.FC<NavigationContentProps> = ({ children }) => {
                   whileHover={{ x: 5 }}
                   className="w-full flex items-center gap-3 p-2 rounded-md hover:bg-muted text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                   onClick={() => {
-                    handleNavigation(section.id)
+                    handleNavigation(section.id);
                     triggerHapticFeedback();
                   }}
                 >
@@ -168,116 +167,72 @@ const NavigationContent: React.FC<NavigationContentProps> = ({ children }) => {
             {setTheme && (
               <motion.div
                 variants={itemVariants}
-                className="space-y-2 pt-4 border-t border-border"
+                className="space-y-4 pt-6 border-t border-border"
               >
-                <h3 className="text-sm font-medium text-muted-foreground mb-2">
-                  Appearance
+                <h3 className="text-sm font-semibold text-muted-foreground mb-3">
+                  Customize Appearance
                 </h3>
 
-                <div className="flex flex-col gap-2">
-                  <span className="text-xs text-muted-foreground">Theme</span>
-                  <div className="flex gap-2">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        setTheme("light")
-                        triggerHapticFeedback();
-                      }}
-                      className={`p-2 rounded-md flex items-center justify-center ${
-                        theme === "light"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted hover:bg-muted/80"
-                      }`}
-                      aria-label="Light theme"
-                    >
-                      <Sun size={16} />
-                      <span className="ml-2">Light</span>
-                    </motion.button>
-
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        setTheme("dark")
-                        triggerHapticFeedback();
-                      }}
-                      className={`p-2 rounded-md flex items-center justify-center ${
-                        theme === "dark"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted hover:bg-muted/80"
-                      }`}
-                      aria-label="Dark theme"
-                    >
-                      <Moon size={16} />
-                      <span className="ml-2">Dark</span>
-                    </motion.button>
-                  </div>
-                </div>
-
-                {/* Accent Color - Only show if setAccent is available */}
-                {setAccent && (
-                  <div className="flex flex-col gap-2 mt-4">
-                    <span className="text-xs text-muted-foreground">
-                      Accent Color
+                <div className="flex flex-col gap-4">
+                  {/* Theme Toggle */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      Theme
                     </span>
-                    <div className="flex gap-2">
+                    <div className="relative">
                       <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        className={`w-12 h-6 flex items-center rounded-full p-1 transition-colors duration-300 ${
+                          theme === "dark" ? "bg-indigo-500" : "bg-yellow-400"
+                        }`}
                         onClick={() => {
-                          setAccent("purple")
+                          setTheme(theme === "light" ? "dark" : "light");
                           triggerHapticFeedback();
                         }}
-                        className={`p-2 rounded-md flex items-center justify-center ${
-                          accent === "purple"
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted hover:bg-muted/80"
-                        }`}
-                        aria-label="Purple accent"
                       >
-                        <Zap size={16} />
-                        <span className="ml-2">Purple</span>
-                      </motion.button>
-
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                          setAccent("blue")
-                          triggerHapticFeedback();
-                        }}
-                        className={`p-2 rounded-md flex items-center justify-center ${
-                          accent === "blue"
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted hover:bg-muted/80"
-                        }`}
-                        aria-label="Blue accent"
-                      >
-                        <Bolt size={16} />
-                        <span className="ml-2">Blue</span>
-                      </motion.button>
-
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                          setAccent("pink")
-                          triggerHapticFeedback();
-                        }}
-                        className={`p-2 rounded-md flex items-center justify-center ${
-                          accent === "pink"
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted hover:bg-muted/80"
-                        }`}
-                        aria-label="Pink accent"
-                      >
-                        <Flame size={16} />
-                        <span className="ml-2">Pink</span>
+                        <motion.div
+                          layout
+                          className={`w-4 h-4 rounded-full shadow-md transform transition-transform ${
+                            theme === "dark"
+                              ? "translate-x-6 bg-gray-800"
+                              : "translate-x-0 bg-white"
+                          }`}
+                        />
                       </motion.button>
                     </div>
                   </div>
-                )}
+
+                  {/* Accent Color Picker */}
+                  {setAccent && (
+                    <div>
+                      <span className="text-xs font-medium text-muted-foreground">
+                        Accent Color
+                      </span>
+                      <div className="flex gap-3 mt-2">
+                        {accentOptions.map(({ color, icon, bgColor }) => (
+                          <motion.button
+                            key={color}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => {
+                              setAccent(color as AccentColor);
+                              triggerHapticFeedback();
+                            }}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                              accent === color
+                                ? `ring-2 ring-offset-2 ring-primary ${bgColor}`
+                                : `${bgColor} bg-opacity-50 hover:bg-opacity-80`
+                            }`}
+                            aria-label={`${color} accent`}
+                          >
+                            {icon}
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </motion.div>
             )}
           </div>
