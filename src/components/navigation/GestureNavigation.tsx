@@ -1,246 +1,308 @@
-import { useEffect, useState, useCallback, useRef } from "react";
-import { useGesture } from "@use-gesture/react";
+import { useNavigation } from "@/contexts/NavigationContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { motion } from "framer-motion";
-import { triggerHapticFeedback } from "@/utils/haptics";
+import { useGesture } from "@use-gesture/react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Navigation } from "lucide-react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 
-type NavSection = {
-  name: string;
-  href: string;
-  id: string;
-};
+interface GestureState {
+  isActive: boolean;
+  direction: "left" | "right" | null;
+  progress: number;
+  targetSection: string | null;
+}
 
-const sections: NavSection[] = [
-  { name: "Home", href: "#home", id: "home" },
-  { name: "Projects", href: "#projects", id: "projects" },
-  { name: "Skills", href: "#skills", id: "skills" },
-  { name: "About", href: "#about", id: "about" },
-  { name: "Contact", href: "#contact", id: "contact" },
-];
+interface GestureNavigationProps {
+  enabled?: boolean;
+  threshold?: number;
+  sensitivity?: number;
+  showIndicators?: boolean;
+  showProgress?: boolean;
+}
 
-// Changed return type to React.ReactElement | null to avoid JSX namespace error
-const GestureNavigation = (): React.ReactElement | null => {
-  const [currentSectionIndex, setCurrentSectionIndex] = useState<number>(0);
-  const [swipeDirection, setSwipeDirection] = useState<string | null>(null);
-  const [isGesturing, setIsGesturing] = useState<boolean>(false);
+const GestureNavigation: React.FC<GestureNavigationProps> = ({
+  enabled = true,
+  threshold = 80,
+  sensitivity = 1,
+  showIndicators = true,
+  showProgress = true,
+}) => {
+  const {
+    sections,
+    activeSection,
+    navigateToSection,
+    getNextSection,
+    getPreviousSection,
+  } = useNavigation();
+
   const isMobile = useIsMobile();
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isScrollingRef = useRef<boolean>(false);
 
-  const navigateToSection = useCallback((index: number): void => {
-    if (index >= 0 && index < sections.length) {
-      const section = document.getElementById(sections[index].id);
+  const [gestureState, setGestureState] = useState<GestureState>({
+    isActive: false,
+    direction: null,
+    progress: 0,
+    targetSection: null,
+  });
 
-      if (section) {
-        section.scrollIntoView({ behavior: "smooth" });
-        setCurrentSectionIndex(index);
-      }
-    }
-  }, []);
+  const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
+  const gestureRef = useRef<HTMLDivElement>(null);
+  const cooldownRef = useRef(false);
 
+  // Update current section index when active section changes
   useEffect(() => {
-    const handleScroll = (): void => {
-      if (isScrollingRef.current) return;
-      isScrollingRef.current = true;
+    const index = sections.findIndex((s) => s.id === activeSection);
+    if (index !== -1) {
+      setCurrentSectionIndex(index);
+    }
+  }, [activeSection, sections]);
 
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
+  // Get target section based on gesture direction
+  const getTargetSection = useCallback(
+    (direction: "left" | "right"): string | null => {
+      if (direction === "right") {
+        return getNextSection();
+      } else {
+        return getPreviousSection();
       }
+    },
+    [getNextSection, getPreviousSection]
+  );
 
-      scrollTimeoutRef.current = setTimeout(() => {
-        const scrollPosition = window.scrollY;
-        const viewportHeight = window.innerHeight;
+  // Handle gesture navigation
+  const handleNavigation = useCallback(
+    async (direction: "left" | "right") => {
+      if (cooldownRef.current) return;
 
-        const sectionElements = sections.map((section, index) => {
-          const element = document.getElementById(section.id);
-          const offset = element?.getBoundingClientRect().top || 0;
-          const height = element?.offsetHeight || 0;
+      const targetSection = getTargetSection(direction);
+      if (!targetSection) return;
 
-          return {
-            index,
-            name: section.name,
-            offset: offset + scrollPosition,
-            height,
-          };
+      cooldownRef.current = true;
+
+      try {
+        await navigateToSection(targetSection, {
+          duration: 0.8,
+          easing: (t: number) => 1 - Math.pow(1 - t, 3),
         });
-
-        // Find the section that takes up most of the viewport
-        const currentSection = sectionElements.reduce((prev, current) => {
-          const prevVisible = Math.max(
-            0,
-            Math.min(
-              prev.offset + prev.height,
-              scrollPosition + viewportHeight
-            ) - Math.max(prev.offset, scrollPosition)
-          );
-
-          const currentVisible = Math.max(
-            0,
-            Math.min(
-              current.offset + current.height,
-              scrollPosition + viewportHeight
-            ) - Math.max(current.offset, scrollPosition)
-          );
-
-          return currentVisible > prevVisible ? current : prev;
-        }, sectionElements[0]);
-
-        if (currentSection && currentSection.index !== currentSectionIndex) {
-          setCurrentSectionIndex(currentSection.index);
-        }
-
-        isScrollingRef.current = false;
-      }, 100); // 100ms throttle
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    // Initial check
-    handleScroll();
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current);
+      } catch (error) {
+        console.error("Gesture navigation failed:", error);
+      } finally {
+        // Reset cooldown after animation
+        setTimeout(() => {
+          cooldownRef.current = false;
+        }, 800);
       }
-    };
-  }, [currentSectionIndex]);
+    },
+    [getTargetSection, navigateToSection]
+  );
 
-  // Fixed gesture handling to ensure it works properly
+  // Setup gesture handlers
   const bind = useGesture(
     {
-      onDrag: ({ direction: [dirX], down, distance, event }) => {
-        // Prevent default to avoid conflicts with other touch events
-        if (event && event.cancelable) {
+      onDrag: ({
+        down,
+        movement: [mx],
+        velocity: [vx],
+        cancel,
+        event,
+      }) => {
+        // Prevent default to avoid conflicts
+        if (
+          event &&
+          "preventDefault" in event &&
+          typeof event.preventDefault === "function"
+        ) {
           event.preventDefault();
         }
 
-        // Show visual feedback during drag
-        if (down && Math.hypot(...distance) > 20) {
-          setIsGesturing(true);
-          setSwipeDirection(dirX > 0 ? "right" : "left");
-        }
+        // Only process horizontal gestures
+        const absMovement = Math.abs(mx);
+        const isHorizontal = absMovement > Math.abs(0); // Simplified check
 
-        // Handle the swipe when released
-        if (!down && Math.hypot(...distance) > 50) {
-          if (dirX > 0) {
-            // Swipe right (previous section)
-            navigateToSection(currentSectionIndex - 1);
-          } else if (dirX < 0) {
-            // Swipe left (next section)
-            navigateToSection(currentSectionIndex + 1);
+        if (!isHorizontal && down) return;
+
+        if (down) {
+          const direction = mx > 0 ? "left" : "right";
+          const targetSection = getTargetSection(direction);
+          const progress = Math.min(absMovement / threshold, 1);
+
+          setGestureState({
+            isActive: true,
+            direction,
+            progress: progress * sensitivity,
+            targetSection,
+          });
+
+          // Cancel if no target section available
+          if (!targetSection && cancel) {
+            cancel();
+          }
+        } else {
+          // Gesture ended
+          const shouldNavigate = absMovement > threshold || Math.abs(vx) > 0.5;
+
+          if (shouldNavigate && gestureState.targetSection) {
+            const direction = mx > 0 ? "left" : "right";
+            handleNavigation(direction);
           }
 
           // Reset gesture state
-          setIsGesturing(false);
-          setSwipeDirection(null);
-        } else if (!down) {
-          // Reset if released without sufficient distance
-          setIsGesturing(false);
-          setSwipeDirection(null);
+          setGestureState({
+            isActive: false,
+            direction: null,
+            progress: 0,
+            targetSection: null,
+          });
         }
-      },
-    },
+      },    },
     {
       drag: {
-        threshold: 5, // Lower threshold for responsiveness
+        axis: "x",
+        threshold: 10,
         filterTaps: true,
-        axis: "x", // Only detect horizontal swipes
-        pointer: { touch: true }, // Only respond to touch events
+        pointer: { touch: true },
+        rubberband: true,
       },
     }
   );
 
-  // Don't render anything if not mobile
-  if (!isMobile) {
+  // Don't render on desktop unless explicitly enabled
+  if (!isMobile && !enabled) {
     return null;
   }
 
   return (
     <>
-      {/* Swipe area - covers the entire screen for better gesture detection */}
+      {/* Gesture Area */}
       <div
+        ref={gestureRef}
         {...bind()}
-        className="fixed inset-x-0 inset-y-0 z-30 pointer-events-auto"
-        style={{ touchAction: "pan-y" }}
+        className="fixed inset-0 z-30 touch-pan-y"
+        style={{
+          touchAction: "pan-y",
+          userSelect: "none",
+          WebkitUserSelect: "none",
+        }}
         aria-hidden="true"
-      >
-        {/* Visual swipe indicator */}
-        {isGesturing && swipeDirection && (
+      />
+
+      {/* Section Indicators */}
+      {showIndicators && (
+        <nav
+          className="fixed top-1/2 right-4 transform -translate-y-1/2
+            flex flex-col items-center space-y-3 z-40"
+          aria-label="Section indicators"
+        >
+
+          {sections.map((section) => {
+            const isActive = section.id === activeSection;
+            const isTarget = section.id === gestureState.targetSection;
+
+            return (
+              <motion.button
+                key={section.id}
+                className={`w-3 h-3 rounded-full transition-all duration-300
+                  ${
+                    isActive
+                      ? "bg-primary w-4 h-4"
+                      : isTarget && gestureState.isActive
+                      ? "bg-primary/60 w-3.5 h-3.5"
+                      : "bg-white/30 hover:bg-white/50"
+                  }`}
+                onClick={() => navigateToSection(section.id)}
+                whileHover={{ scale: 1.2 }}
+                whileTap={{ scale: 0.9 }}
+                animate={{
+                  scale: isTarget && gestureState.isActive ? 1.3 : 1,
+                  opacity: isActive ? 1 : 0.7,
+                }}
+                aria-label={`Navigate to ${section.name}`}
+                aria-current={isActive ? "page" : undefined}
+              />
+            );
+
+          })}        </nav>
+      )}
+
+      {/* Gesture Progress Indicator */}
+      <AnimatePresence>
+        {gestureState.isActive && showProgress && (
           <motion.div
-            className="fixed inset-0 flex items-center justify-center pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.7 }}
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50"
           >
             <div
-              className="w-16 h-16 rounded-full bg-cyberpunk-dark flex items-center justify-center
-              border-2 border-cyberpunk-pink"
+              className="flex items-center gap-3 px-4 py-3 bg-background/90
+              backdrop-blur-md border border-border rounded-full shadow-lg"
             >
-              <svg
-                viewBox="0 0 24 24"
-                className="w-8 h-8 text-cyberpunk-pink"
-                style={{
-                  transform:
-                    swipeDirection === "right" ? "rotate(180deg)" : "none",
-                }}
-                aria-hidden="true"
-              >
-                <path
-                  fill="currentColor"
-                  d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z"
+              {/* Direction Indicator */}
+              <div className="flex items-center gap-2">
+                {gestureState.direction === "left" ? (
+                  <ChevronLeft className="w-5 h-5 text-primary" />
+                ) : (
+                  <ChevronRight className="w-5 h-5 text-primary" />
+                )}
+
+                <span className="text-sm font-medium">
+                  {gestureState.targetSection
+                    ? sections.find((s) => s.id === gestureState.targetSection)
+                        ?.name
+                    : "No more sections"}
+                </span>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="w-16 h-2 bg-secondary rounded-full overflow-hidden">
+                <motion.div
+                  className="h-full bg-primary"
+                  initial={{ width: 0 }}
+                  animate={{
+                    width: `${Math.min(gestureState.progress * 100, 100)}%`,
+                  }}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
                 />
-              </svg>
+              </div>
             </div>
           </motion.div>
         )}
-      </div>
+      </AnimatePresence>
 
-      {/* Section indicators */}
-      <nav
-        className="fixed top-1/2 right-4 transform -translate-y-1/2 flex flex-col items-center space-y-2 z-40"
-        aria-label="Section navigation"
-      >
-        {sections.map((section, index) => (
-          <motion.button
-            key={index}
-            className={`
-              w-2 h-2 rounded-full transition-all duration-300 cursor-pointer
-              ${
-                index === currentSectionIndex
-                  ? "bg-cyberpunk-pink"
-                  : "bg-white/30"
-              }
-            `}
-            whileHover={{ scale: 1.5 }}
-            onClick={() => {
-              navigateToSection(index)
-              triggerHapticFeedback();
-            }}
-            aria-label={`Navigate to ${section.name}`}
-            aria-current={index === currentSectionIndex ? "page" : undefined}
-            animate={{
-              scale: index === currentSectionIndex ? 1.2 : 1,
-            }}
-          />
-        ))}
-      </nav>
+      {/* Current Section Display */}
+      <AnimatePresence>
+        {gestureState.isActive && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className="fixed top-8 left-1/2 transform -translate-x-1/2 z-40
+              px-3 py-1 bg-primary/20 border border-primary/30 rounded-full"
+          >
+            <div className="flex items-center gap-2 text-sm">
+              <Navigation className="w-4 h-4" />
+              <span>
+                {currentSectionIndex + 1} / {sections.length}
+              </span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Current section name toast */}
-      <motion.div
-        className="fixed bottom-8 left-1/2 transform -translate-x-1/2 py-1 px-3
-                   bg-cyberpunk-dark/80 border border-cyberpunk-pink rounded-full
-                   text-white text-xs z-40"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{
-          opacity: isGesturing ? 1 : 0,
-          y: isGesturing ? 0 : 10,
-        }}
-        transition={{ duration: 0.2 }}
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        {currentSectionIndex < sections.length &&
-          sections[currentSectionIndex].name}
-      </motion.div>
+      {/* Gesture Hints */}
+      {!gestureState.isActive && isMobile && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.6 }}
+          className="fixed bottom-20 left-1/2 transform -translate-x-1/2 z-30
+            text-xs text-muted-foreground text-center pointer-events-none"
+        >
+          <div className="flex items-center gap-1">
+            <ChevronLeft className="w-3 h-3" />
+            <span>Swipe to navigate</span>
+            <ChevronRight className="w-3 h-3" />
+          </div>
+        </motion.div>
+      )}
     </>
   );
 };
