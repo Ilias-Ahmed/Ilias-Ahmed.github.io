@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import DotsNavigation from "./DotsNavigation";
-import GestureNavigation from "./GestureNavigation";
 import VoiceNavigation from "./VoiceNavigation";
 import DockNavigation from "./DockNavigation";
 import NavigationMenu from "./NavigationMenu";
@@ -14,7 +13,6 @@ import CommandPalette from "../ui/CommandPalette";
 interface NavigationProps {
   enableDots?: boolean;
   enableVoice?: boolean;
-  enableGestures?: boolean;
   enableCommandPalette?: boolean;
   enableBackToTop?: boolean;
   enableDock?: boolean;
@@ -48,7 +46,6 @@ const triggerHapticFeedback = (
 const Navigation: React.FC<NavigationProps> = ({
   enableDots = true,
   enableVoice = true,
-  enableGestures = true,
   enableCommandPalette = true,
   enableBackToTop = true,
   enableDock = true,
@@ -410,7 +407,6 @@ const Navigation: React.FC<NavigationProps> = ({
         <NavigationMenu
           showQuickActions={true}
           showDeviceStatus={true}
-          enableSwipeGestures={isMobile}
           compactMode={false}
         />
       )}
@@ -569,7 +565,6 @@ const Navigation: React.FC<NavigationProps> = ({
               autoStopTimeout={5000}
             />
           )}
-          {enableGestures && <GestureNavigation />}
         </>
       )}
 

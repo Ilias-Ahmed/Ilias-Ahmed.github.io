@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useAnimationControls } from "framer-motion";
 
 interface LoadingScreenProps {
@@ -39,10 +39,18 @@ const LoadingScreen = ({
     Array<{ x: number; y: number; size: number; speed: number; color: string }>
   >([]);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [isMounted, setIsMounted] = useState(false);
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<number>(0);
   const progressControls = useAnimationControls();
   const galaxyRef = useRef<HTMLDivElement>(null);
+
+  // Component mount detection
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
 
   // Generate hexagon grid for background
   const hexagons = useMemo(() => {
@@ -64,8 +72,8 @@ const LoadingScreen = ({
     const newParticles = [];
     for (let i = 0; i < particleCount; i++) {
       newParticles.push({
-        x: Math.random() * window.innerWidth,
-        y: Math.random() * window.innerHeight,
+        x: Math.random() * (typeof window !== 'undefined' ? window.innerWidth : 800),
+        y: Math.random() * (typeof window !== 'undefined' ? window.innerHeight : 600),
         size: Math.random() * 3 + 1,
         speed: Math.random() * 0.5 + 0.1,
         color: Math.random() > 0.5 ? accentColor : secondaryColor,
@@ -103,13 +111,15 @@ const LoadingScreen = ({
       setMousePosition({ x: e.clientX, y: e.clientY });
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    if (typeof window !== 'undefined') {
+      window.addEventListener("mousemove", handleMouseMove);
+      return () => window.removeEventListener("mousemove", handleMouseMove);
+    }
   }, []);
 
   // Interactive galaxy effect rendering
   useEffect(() => {
-    if (!canvasRef.current || !galaxyRef.current) return;
+    if (!canvasRef.current || !galaxyRef.current || typeof window === 'undefined') return;
 
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -223,54 +233,8 @@ const LoadingScreen = ({
     };
   }, [particles, mousePosition, accentColor, secondaryColor]);
 
-  // Main loading progress simulation
-  useEffect(() => {
-    // Smooth progression with easing
-    const simulateProgress = () => {
-      const startTime = Date.now();
-      const animateProgress = () => {
-        const currentTime = Date.now();
-        const elapsed = currentTime - startTime;
-
-        // Calculate progress with cubic-bezier easing
-        const t = Math.min(elapsed / duration, 1);
-        const easedT = cubicBezier(0.34, 0.52, 0.57, 0.98, t);
-        const nextProgress = Math.min(100, easedT * 100);
-
-        setProgress(nextProgress);
-
-        // Determine if we should continue animation
-        if (t < 1) {
-          requestAnimationFrame(animateProgress);
-        } else {
-          // Trigger exit animation after reaching 100%
-          setTimeout(() => {
-            // Fix: Move progressControls.start() inside useEffect
-            progressControls.start({
-              scale: [1, 1.2, 0],
-              opacity: [1, 1, 0],
-              transition: { duration: 1.5 },
-            });
-
-            setExitAnimation(true);
-
-            // Complete loading after exit animation
-            setTimeout(() => {
-              setLoadingComplete(true);
-              if (onLoadingComplete) onLoadingComplete();
-            }, 2500);
-          }, 800);
-        }
-      };
-
-      requestAnimationFrame(animateProgress);
-    };
-
-    simulateProgress();
-  }, [duration, onLoadingComplete, progressControls]);
-
   // Cubic bezier function for smooth easing
-  const cubicBezier = (
+  const cubicBezier = useCallback((
     x1: number,
     y1: number,
     x2: number,
@@ -305,7 +269,62 @@ const LoadingScreen = ({
     }
 
     return sampleCurveY(tCurrent);
-  };
+  }, []);
+
+  // Exit animation trigger
+  const triggerExitAnimation = useCallback(() => {
+    if (!isMounted) return;
+
+    // FIXED: Move progressControls.start() inside useEffect
+    progressControls.start({
+      scale: [1, 1.2, 0],
+      opacity: [1, 1, 0],
+      transition: { duration: 1.5 },
+    });
+
+    setExitAnimation(true);
+
+    // Complete loading after exit animation
+    setTimeout(() => {
+      setLoadingComplete(true);
+      if (onLoadingComplete) onLoadingComplete();
+    }, 2500);
+  }, [isMounted, progressControls, onLoadingComplete]);
+
+  // Main loading progress simulation
+  useEffect(() => {
+    if (!isMounted) return;
+
+    // Smooth progression with easing
+    const simulateProgress = () => {
+      const startTime = Date.now();
+      const animateProgress = () => {
+        const currentTime = Date.now();
+        const elapsed = currentTime - startTime;
+
+        // Calculate progress with cubic-bezier easing
+        const t = Math.min(elapsed / duration, 1);
+        const easedT = cubicBezier(0.34, 0.52, 0.57, 0.98, t);
+        const nextProgress = Math.min(100, easedT * 100);
+
+        setProgress(nextProgress);
+
+        // Determine if we should continue animation
+        if (t < 1) {
+          requestAnimationFrame(animateProgress);
+        } else {
+          // Trigger exit animation after reaching 100%
+          setTimeout(() => {
+            triggerExitAnimation();
+          }, 800);
+        }
+      };
+
+      requestAnimationFrame(animateProgress);
+    };
+
+    simulateProgress();
+  }, [duration, cubicBezier, triggerExitAnimation, isMounted]);
 
   if (loadingComplete) return null;
 
@@ -409,7 +428,7 @@ const LoadingScreen = ({
                 >
                   {index === 0 && (
                     <div className="text-white font-bold text-2xl tracking-wider">
-                      ZF
+                      IA
                     </div>
                   )}
                 </motion.div>
@@ -487,7 +506,7 @@ const LoadingScreen = ({
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7 }}
           >
-            <motion.p
+            <motion.div
               className="text-lg italic text-purple-200/70 px-6"
               animate={{ opacity: [0.7, 1, 0.7] }}
               transition={{ duration: 4, repeat: Infinity }}
@@ -500,7 +519,7 @@ const LoadingScreen = ({
                 |
               </motion.span>
               "
-            </motion.p>
+            </motion.div>
           </motion.div>
 
           {/* Status messages with tech-inspired animations */}

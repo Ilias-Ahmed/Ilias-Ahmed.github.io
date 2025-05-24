@@ -676,6 +676,7 @@ const Hero: React.FC = () => {
         isDark ? "bg-gray-950" : "bg-gray-50"
       }`}
       style={backgroundStyles}
+      data-gesture-area="true"
     >
       {/* Performance-Optimized Background System */}
       <div className="absolute inset-0">
@@ -693,7 +694,7 @@ const Hero: React.FC = () => {
         {/* Base gradient - always visible */}
         <div
           className={`absolute inset-0 bg-gradient-to-br ${accentColors.mesh} ${
-            shouldUseBackgroundVector ? 'opacity-30' : 'opacity-100'
+            shouldUseBackgroundVector ? "opacity-30" : "opacity-100"
           }`}
           style={{
             backgroundSize: "400% 400%",
@@ -727,30 +728,31 @@ const Hero: React.FC = () => {
         )}
 
         {/* Simplified particle system for low-end devices or mobile */}
-        {effectsEnabled && (shouldUseBackgroundVector || !isHighPerformance) && (
-          <div className="absolute inset-0 z-20">
-            {[...Array(shouldUseBackgroundVector ? 3 : 4)].map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute w-1 h-1 rounded-full"
-                style={{
-                  backgroundColor: accentColors.primary,
-                  left: `${25 + i * 20}%`,
-                  top: `${30 + i * 15}%`,
-                }}
-                animate={{
-                  scale: [0, 1, 0],
-                  opacity: [0, 0.6, 0],
-                }}
-                transition={{
-                  duration: 3,
-                  repeat: Infinity,
-                  delay: i * 0.5,
-                }}
-              />
-            ))}
-          </div>
-        )}
+        {effectsEnabled &&
+          (shouldUseBackgroundVector || !isHighPerformance) && (
+            <div className="absolute inset-0 z-20">
+              {[...Array(shouldUseBackgroundVector ? 3 : 4)].map((_, i) => (
+                <motion.div
+                  key={i}
+                  className="absolute w-1 h-1 rounded-full"
+                  style={{
+                    backgroundColor: accentColors.primary,
+                    left: `${25 + i * 20}%`,
+                    top: `${30 + i * 15}%`,
+                  }}
+                  animate={{
+                    scale: [0, 1, 0],
+                    opacity: [0, 0.6, 0],
+                  }}
+                  transition={{
+                    duration: 3,
+                    repeat: Infinity,
+                    delay: i * 0.5,
+                  }}
+                />
+              ))}
+            </div>
+          )}
       </div>
 
       {/* Control Panel - Unique Feature - Hidden on mobile for better UX */}
@@ -832,7 +834,11 @@ const Hero: React.FC = () => {
           } gap-12 items-center min-h-screen`}
         >
           {/* Left Column - Enhanced Content */}
-          <div className={`text-left space-y-8 ${shouldUseBackgroundVector ? "text-center lg:text-left" : ""}`}>
+          <div
+            className={`text-left space-y-8 ${
+              shouldUseBackgroundVector ? "text-center lg:text-left" : ""
+            }`}
+          >
             {/* Status Indicator with Real-time Clock */}
             <motion.div variants={itemVariants}>
               <motion.div
@@ -945,21 +951,23 @@ const Hero: React.FC = () => {
 
             {/* Enhanced Description */}
             <motion.div variants={itemVariants}>
-              <motion.p
+              <motion.div
                 className={`text-base md:text-lg lg:text-xl leading-relaxed max-w-2xl ${
                   isDark ? "text-gray-300" : "text-gray-700"
                 } ${shouldUseBackgroundVector ? "mx-auto lg:mx-0" : ""}`}
               >
                 Crafting{" "}
                 <motion.span
-                  className="font-bold cursor-pointer relative"
+                  className="font-bold cursor-pointer relative inline-block"
                   style={{ color: accentColors.primary }}
                   whileHover={{ scale: 1.05 }}
-                  onHoverStart={() => !shouldUseBackgroundVector && setCurrentMode("hologram")}
+                  onHoverStart={() =>
+                    !shouldUseBackgroundVector && setCurrentMode("hologram")
+                  }
                 >
                   digital experiences
-                  <motion.div
-                    className="absolute -bottom-1 left-0 h-0.5 bg-current"
+                  <motion.span
+                    className="absolute -bottom-1 left-0 h-0.5 bg-current block"
                     initial={{ width: 0 }}
                     whileHover={{ width: "100%" }}
                     transition={{ duration: 0.3 }}
@@ -967,12 +975,18 @@ const Hero: React.FC = () => {
                 </motion.span>{" "}
                 that bridge imagination and reality through cutting-edge
                 technology
-              </motion.p>
+              </motion.div>
             </motion.div>
 
             {/* Tech Stack Preview */}
             <motion.div variants={itemVariants}>
-              <div className={`flex flex-wrap gap-3 ${shouldUseBackgroundVector ? "justify-center lg:justify-start" : ""}`}>
+              <div
+                className={`flex flex-wrap gap-3 ${
+                  shouldUseBackgroundVector
+                    ? "justify-center lg:justify-start"
+                    : ""
+                }`}
+              >
                 {techStackData.slice(0, 4).map((tech, index) => (
                   <motion.div
                     key={tech.label}
@@ -998,7 +1012,14 @@ const Hero: React.FC = () => {
             </motion.div>
 
             {/* Enhanced Social Links */}
-            <motion.div variants={itemVariants} className={`flex gap-4 ${shouldUseBackgroundVector ? "justify-center lg:justify-start" : ""}`}>
+            <motion.div
+              variants={itemVariants}
+              className={`flex gap-4 ${
+                shouldUseBackgroundVector
+                  ? "justify-center lg:justify-start"
+                  : ""
+              }`}
+            >
               {socialLinks.map((social, index) => (
                 <motion.button
                   key={social.label}
