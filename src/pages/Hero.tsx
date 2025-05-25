@@ -200,7 +200,7 @@ const Hero: React.FC = () => {
   const heroRef = useRef<HTMLDivElement>(null);
 
   const { isDark, getAccentColors } = useTheme();
-  const accentColors = getAccentColors();
+  const accentColors: AccentColors = getAccentColors() as unknown as AccentColors;
   const { setCurrentSection } = useBackground();
   const { navigateToSection } = useNavigation();
   const isMobile = useIsMobile();
@@ -265,7 +265,6 @@ const Hero: React.FC = () => {
       const mouseYPos =
         (e.clientY - rect.top - centerY) * MOUSE_MOVE_MULTIPLIER;
 
-      setMousePosition({ x: mouseXPos, y: mouseYPos });
       mouseX.set(mouseXPos);
       mouseY.set(mouseYPos);
     },
@@ -487,7 +486,6 @@ const Hero: React.FC = () => {
                   <social.icon
                     size={20}
                     className="transition-colors duration-300 group-hover:text-current"
-                    style={{ color: accentColors.primary }}
                   />
                   {social.href && (
                     <ExternalLink

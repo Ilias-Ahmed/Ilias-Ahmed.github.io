@@ -88,9 +88,8 @@ const DotsNavigation: React.FC<DotsNavigationProps> = ({
   const getSectionProgress = useCallback(
     (sectionId: string) => {
       if (activeSection !== sectionId) return 0;
-      return scrollProgress?.[sectionId] || 0;
-    },
-    [activeSection, scrollProgress]
+      return scrollProgress && typeof scrollProgress === 'object' ? (scrollProgress[sectionId] as number) || 0 : 0;
+    },    [activeSection, scrollProgress]
   );
 
   return (

@@ -468,7 +468,7 @@ const GlobalBackground: React.FC = () => {
   );
 
   const renderMatrix = useCallback(
-    (ctx: CanvasRenderingContext2D) => {
+    (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
       const colors = getThemeColors();
       const { bassFreq } = audioAnalysis;
 
@@ -606,7 +606,7 @@ const GlobalBackground: React.FC = () => {
         renderParticles(ctx, canvas);
         break;
       case "neural":
-        renderNeuralNetwork(ctx, canvas);
+        renderNeuralNetwork(ctx);
         break;
       case "hologram":
         renderHologram(ctx, canvas);
@@ -626,7 +626,7 @@ const GlobalBackground: React.FC = () => {
             renderMinimal(ctx, canvas);
             break;
           case "skills":
-            renderNeuralNetwork(ctx, canvas);
+            renderNeuralNetwork(ctx);
             break;
           case "projects":
             renderHologram(ctx, canvas);

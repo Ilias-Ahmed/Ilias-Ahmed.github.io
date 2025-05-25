@@ -6,8 +6,6 @@ import {
   HardDrive,
   Monitor,
   TrendingUp,
-  Settings,
-  X,
   ChevronUp,
   ChevronDown,
 } from "lucide-react";
@@ -47,7 +45,7 @@ const BackgroundPerformanceMonitor: React.FC<
   const [performanceHistory, setPerformanceHistory] = useState<number[]>([]);
   const frameCountRef = useRef(0);
   const lastTimeRef = useRef(performance.now());
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number>(0);
 
   // Performance monitoring
   const updateMetrics = useCallback(() => {
@@ -63,7 +61,12 @@ const BackgroundPerformanceMonitor: React.FC<
       // Get memory usage if available
       let memoryUsage = 0;
       if ("memory" in performance) {
-        const memory = (performance as any).memory;
+        interface MemoryInfo {
+          usedJSHeapSize: number;
+          totalJSHeapSize: number;
+          jsHeapSizeLimit: number;
+        }
+        const memory = (performance as Performance & { memory: MemoryInfo }).memory;
         memoryUsage = Math.round(
           (memory.usedJSHeapSize / memory.totalJSHeapSize) * 100
         );

@@ -62,6 +62,7 @@ const ACCENT_COLOR_MAP = {
     variants: {
       50: "#faf5ff",
       100: "#f3e8ff",
+      400: "#a78bfa",
       500: "#8b5cf6",
       600: "#7c3aed",
       900: "#4c1d95",
@@ -74,6 +75,7 @@ const ACCENT_COLOR_MAP = {
     variants: {
       50: "#eff6ff",
       100: "#dbeafe",
+      400: "#60a5fa",
       500: "#3b82f6",
       600: "#2563eb",
       900: "#1e3a8a",
@@ -86,30 +88,33 @@ const ACCENT_COLOR_MAP = {
     variants: {
       50: "#fdf2f8",
       100: "#fce7f3",
+      400: "#f472b6",
       500: "#ec4899",
       600: "#db2777",
       900: "#831843",
     },
   },
   green: {
-    hsl: "142.1 76.2% 36.3%",
+    hsl: "158.1 64.4% 47.1%",
     hex: "#10b981",
     rgb: "16, 185, 129",
     variants: {
       50: "#ecfdf5",
       100: "#d1fae5",
+      400: "#34d399",
       500: "#10b981",
       600: "#059669",
       900: "#064e3b",
     },
   },
   orange: {
-    hsl: "24.6 95% 53.1%",
+    hsl: "38.1 92.1% 50.2%",
     hex: "#f59e0b",
     rgb: "245, 158, 11",
     variants: {
       50: "#fffbeb",
       100: "#fef3c7",
+      400: "#fbbf24",
       500: "#f59e0b",
       600: "#d97706",
       900: "#92400e",
@@ -207,7 +212,7 @@ export function ThemeProvider({
       shadow: `rgba(${accentData.rgb}, 0.25)`,
       border: `rgba(${accentData.rgb}, 0.5)`,
       gradient: `linear-gradient(135deg, ${accentData.variants[400]} 0%, ${accentData.variants[600]} 100%)`,
-      mesh: `linear-gradient(135deg, ${accentData.variants[500]}20 0%, ${accentData.variants[600]}20 50%, ${accentData.variants[700]}20 100%)`,
+      mesh: `linear-gradient(135deg, ${accentData.variants[500]}20 0%, ${accentData.variants[600]}20 50%, ${accentData.variants[900]}20 100%)`,
     };
   }, [themeOptions.accent]);
 
@@ -359,17 +364,4 @@ export function ThemeProvider({
 }
 
 // Utility hooks for specific theme aspects
-export function useThemeColors(): ThemeColors {
-  const { getThemeColors } = useTheme();
-  return useMemo(() => getThemeColors(), [getThemeColors]);
-}
-
-export function useAccentColors() {
-  const { getAccentColors } = useTheme();
-  return useMemo(() => getAccentColors(), [getAccentColors]);
-}
-
-export function useIsDark(): boolean {
-  const { isDark } = useTheme();
-  return isDark;
-}
+// (Moved to ThemeHooks.ts for Fast Refresh compatibility)
