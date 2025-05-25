@@ -40,7 +40,7 @@ const LoadingScreen = ({
   >([]);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isMounted, setIsMounted] = useState(false);
-  
+
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const frameRef = useRef<number>(0);
   const progressControls = useAnimationControls();

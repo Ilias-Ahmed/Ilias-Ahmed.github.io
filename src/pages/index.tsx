@@ -229,7 +229,6 @@ const Index = () => {
           <Navigation
             enableDots={!isMobile}
             enableVoice={!isMobile}
-            enableGestures={true}
             enableCommandPalette={true}
             enableBackToTop={true}
           />

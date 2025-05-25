@@ -56,7 +56,6 @@ interface NavigationMenuProps {
   children?: ReactNode;
   showQuickActions?: boolean;
   showDeviceStatus?: boolean;
-  enableSwipeGestures?: boolean;
   compactMode?: boolean;
   className?: string;
   ariaLabel?: string;
@@ -108,7 +107,6 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
   children,
   showQuickActions = true,
   showDeviceStatus = true,
-  enableSwipeGestures = true,
   compactMode = false,
   className = "",
   ariaLabel = "Navigation menu",
@@ -148,7 +146,6 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
   const [favoriteActions, setFavoriteActions] = useState<string[]>([
     "command-palette",
   ]);
-  const [dragOffset, setDragOffset] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Initialize component
@@ -600,30 +597,6 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
     [navigateToSection, closeMenu, triggerHaptic, sections]
   );
 
-  // Enhanced swipe gesture handlers with proper typing
-  const handleDrag = useCallback(
-    (_event: MouseEvent | TouchEvent | PointerEvent, info: { offset: { x: number } }) => {
-      if (!enableSwipeGestures) return;
-      setDragOffset(Math.max(0, info.offset.x));
-    },
-    [enableSwipeGestures]
-  );
-
-  const handleDragEnd = useCallback(
-    (
-      _event: MouseEvent | TouchEvent | PointerEvent,
-      info: { offset: { x: number }; velocity: { x: number } }
-    ) => {
-      if (!enableSwipeGestures) return;
-
-      if (info.offset.x > 150 || info.velocity.x > 500) {
-        closeMenu();
-        triggerHaptic("medium");
-      }
-      setDragOffset(0);
-    },
-    [enableSwipeGestures, closeMenu, triggerHaptic]
-  );
 
   // Enhanced theme change handler
   const handleThemeChange = useCallback(
@@ -788,12 +761,8 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
             initial="closed"
             animate="open"
             exit="closed"
-            drag={enableSwipeGestures ? "x" : false}
             dragConstraints={{ left: 0, right: 300 }}
             dragElastic={0.2}
-            onDrag={handleDrag}
-            onDragEnd={handleDragEnd}
-            style={{ x: dragOffset > 0 ? dragOffset : 0 }}
             className={`fixed top-0 right-0 h-full w-full sm:w-96 z-50 overflow-hidden
               ${isDark
                 ? "bg-gray-950/95 border-l border-gray-800"
@@ -804,15 +773,7 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
             aria-labelledby="menu-title"
             aria-label={ariaLabel}
           >
-            {/* Swipe indicator */}
-            {enableSwipeGestures && (
-              <div
-                className={`absolute top-4 right-4 w-8 h-1 rounded-full ${
-                  isDark ? "bg-white/20" : "bg-black/20"
-                }`}
-                aria-hidden="true"
-              />
-            )}
+
 
             <div className="flex flex-col h-full">
               {/* Enhanced header */}
@@ -1248,10 +1209,6 @@ const NavigationMenu: React.FC<NavigationMenuProps> = ({
                   <div className="flex items-center justify-center gap-4">
                     <span>⌘K Command Palette</span>
                     <span>/ Search</span>
-                  </div>
-                  <div>
-                    {enableSwipeGestures && "Swipe right to close • "}
-                    {deviceStatus.soundEnabled ? "🔊" : "🔇"} Sound {deviceStatus.soundEnabled ? "on" : "off"}
                   </div>
                 </div>
               </motion.div>
