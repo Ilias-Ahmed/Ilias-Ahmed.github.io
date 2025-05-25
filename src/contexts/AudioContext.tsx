@@ -60,7 +60,7 @@ export function AudioProvider({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
-  const animationFrameRef = useRef<number>();
+  const animationFrameRef = useRef<number | null>(null);
   const gainNodeRef = useRef<GainNode | null>(null);
   const isInitializedRef = useRef(false);
 
