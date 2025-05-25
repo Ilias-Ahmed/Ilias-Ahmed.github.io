@@ -1,4 +1,10 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import {
   motion,
   useAnimation,
@@ -25,13 +31,12 @@ import {
   Cpu,
   ChevronDown,
   ExternalLink,
-  Volume2,
-  VolumeX,
   Layers,
 } from "lucide-react";
 import { useNavigation } from "@/contexts/NavigationContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useIsMobile, useDeviceDetection } from "@/hooks/use-mobile";
+import AudioControls from "@/components/ui/AudioControls";
 
 // Performance-optimized type definitions
 interface MousePosition {
@@ -113,8 +118,8 @@ const InteractiveHologram: React.FC<{
   const [nodes, setNodes] = useState<HologramNode[]>([]);
   const animationFrameRef = useRef<number | null>(null);
 
-  // Initialize hologram nodes (performance optimized)
-  useEffect(() => {
+// Initialize hologram nodes (performance optimized)
+    useEffect(() => {
     if (!isActive) return;
 
     const initialNodes: HologramNode[] = Array.from({ length: 12 }, (_, i) => ({
@@ -413,10 +418,12 @@ const Hero: React.FC = () => {
   // Performance states
   const [isHighPerformance, setIsHighPerformance] = useState(false);
   const [effectsEnabled, setEffectsEnabled] = useState(true);
-  const [audioEnabled, setAudioEnabled] = useState(false);
   const [currentMode, setCurrentMode] = useState<
     "normal" | "hologram" | "matrix"
   >("normal");
+  const [currentVisualizer, setCurrentVisualizer] = useState<
+    "bars" | "wave" | "circular" | "particles"
+  >("bars");
 
   // Safe destructuring with fallbacks
   const { navigateToSection = () => {} } = navigation || {};
@@ -522,13 +529,17 @@ const Hero: React.FC = () => {
   // Performance detection
   useEffect(() => {
     const checkPerformance = () => {
-      const connection = (navigator as Navigator & { connection?: { effectiveType?: string } }).connection;
+      const connection = (
+        navigator as Navigator & { connection?: { effectiveType?: string } }
+      ).connection;
       const isSlowConnection =
         connection?.effectiveType === "2g" ||
         connection?.effectiveType === "slow-2g";
       const isLowEndDevice = navigator.hardwareConcurrency <= 2;
 
-      setIsHighPerformance(!isSlowConnection && !isLowEndDevice && !shouldUseBackgroundVector);
+      setIsHighPerformance(
+        !isSlowConnection && !isLowEndDevice && !shouldUseBackgroundVector
+      );
       setEffectsEnabled(!isSlowConnection && !isLowEndDevice);
     };
 
@@ -635,15 +646,15 @@ const Hero: React.FC = () => {
     () => [
       {
         icon: Github,
-        action: () => openLink("https://github.com/iliasahmed"),
+        action: () => openLink("https://github.com/Ilias-Ahmed"),
         label: "GitHub",
-        href: "https://github.com/iliasahmed",
+        href: "https://github.com/Ilias-Ahmed",
       },
       {
         icon: Linkedin,
-        action: () => openLink("https://linkedin.com/in/iliasahmed"),
+        action: () => openLink("https://www.linkedin.com/in/ilias-ahmed9613/"),
         label: "LinkedIn",
-        href: "https://linkedin.com/in/iliasahmed",
+        href: "https://www.linkedin.com/in/ilias-ahmed9613/",
       },
       {
         icon: Download,
@@ -659,10 +670,10 @@ const Hero: React.FC = () => {
     if (shouldUseBackgroundVector) {
       return {
         backgroundImage: `url('https://cdn.pixabay.com/photo/2019/10/09/07/28/development-4536630_1280.png')`,
-        backgroundSize: 'contain',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center right',
-        backgroundAttachment: 'scroll', // Changed from fixed for better mobile performance
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center right",
+        backgroundAttachment: "scroll",
       };
     }
     return {};
@@ -755,10 +766,10 @@ const Hero: React.FC = () => {
           )}
       </div>
 
-      {/* Control Panel - Unique Feature - Hidden on mobile for better UX */}
+      {/* Control Panel - Desktop only, removed audio toggle */}
       {!shouldUseBackgroundVector && (
         <motion.div
-          className="absolute top-6 right-6 z-50 flex gap-2"
+          className="fixed top-6 left-1/2 -translate-x-1/2 z-50 flex gap-2"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1 }}
@@ -802,24 +813,6 @@ const Hero: React.FC = () => {
               <Zap size={18} style={{ color: "#6B7280" }} />
             )}
           </motion.button>
-
-          {/* Audio Toggle */}
-          <motion.button
-            className={`p-3 rounded-lg backdrop-blur-lg ${
-              isDark ? "bg-gray-900/80" : "bg-white/80"
-            } border border-gray-300/30 transition-all duration-300`}
-            style={{ borderColor: accentColors.border }}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setAudioEnabled(!audioEnabled)}
-            title="Toggle Audio"
-          >
-            {audioEnabled ? (
-              <Volume2 size={18} style={{ color: accentColors.primary }} />
-            ) : (
-              <VolumeX size={18} style={{ color: "#6B7280" }} />
-            )}
-          </motion.button>
         </motion.div>
       )}
 
@@ -840,7 +833,10 @@ const Hero: React.FC = () => {
             }`}
           >
             {/* Status Indicator with Real-time Clock */}
-            <motion.div variants={itemVariants}>
+            <motion.div
+              variants={itemVariants}
+              className="fixed top-4 left-4 z-50"
+            >
               <motion.div
                 className={`inline-flex items-center gap-3 px-6 py-3 rounded-full text-sm font-medium backdrop-blur-lg shadow-xl border transition-all duration-300 ${
                   isDark
@@ -904,7 +900,7 @@ const Hero: React.FC = () => {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.8 }}
                 >
-                  ILIAS AHMED
+                  ILIAS
                 </motion.span>
                 <br />
                 <motion.span
@@ -924,7 +920,7 @@ const Hero: React.FC = () => {
                   initial={{ opacity: 0, x: 50 }}
                   whileHover={{ scale: 1.05 }}
                 >
-                  Ahmed
+                  AHMED
                 </motion.span>
               </motion.h1>
 
@@ -1184,6 +1180,18 @@ const Hero: React.FC = () => {
           </motion.button>
         </motion.div>
       </div>
+
+      {/* Unified Audio Controls - positioned for mobile/desktop */}
+      <AudioControls
+        accentColors={accentColors}
+        isDark={isDark}
+        onVisualizerChange={(type) =>
+          setCurrentVisualizer(
+            type as "bars" | "wave" | "circular" | "particles"
+          )
+        }
+        currentVisualizer={currentVisualizer}
+      />
 
       {/* Custom CSS for gradient animation */}
       <style>{`
