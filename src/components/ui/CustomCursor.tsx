@@ -18,6 +18,76 @@ const CustomCursor = () => {
   const hoverElementRef = useRef<HTMLElement | null>(null);
   const { accent, isDark } = useTheme();
 
+  // Get computed theme colors for cursor
+  const getComputedThemeColors = () => {
+    if (typeof window === "undefined") return null;
+
+    const root = document.documentElement;
+    const computedStyle = getComputedStyle(root);
+
+    // Get the HSL values and convert to usable format
+    const primaryHSL = computedStyle.getPropertyValue("--primary").trim();
+
+    // Convert HSL to RGB for cursor usage
+    const hslToRgb = (h: number, s: number, l: number) => {
+      s /= 100;
+      l /= 100;
+      const c = (1 - Math.abs(2 * l - 1)) * s;
+      const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+      const m = l - c / 2;
+      let r = 0,
+        g = 0,
+        b = 0;
+
+      if (0 <= h && h < 60) {
+        r = c;
+        g = x;
+        b = 0;
+      } else if (60 <= h && h < 120) {
+        r = x;
+        g = c;
+        b = 0;
+      } else if (120 <= h && h < 180) {
+        r = 0;
+        g = c;
+        b = x;
+      } else if (180 <= h && h < 240) {
+        r = 0;
+        g = x;
+        b = c;
+      } else if (240 <= h && h < 300) {
+        r = x;
+        g = 0;
+        b = c;
+      } else if (300 <= h && h < 360) {
+        r = c;
+        g = 0;
+        b = x;
+      }
+
+      r = Math.round((r + m) * 255);
+      g = Math.round((g + m) * 255);
+      b = Math.round((b + m) * 255);
+
+      return { r, g, b };
+    };
+
+    // Parse HSL values
+    const hslValues = primaryHSL
+      .split(" ")
+      .map((v) => parseFloat(v.replace("%", "")));
+    const [h, s, l] = hslValues;
+    const { r, g, b } = hslToRgb(h, s, l);
+
+    return {
+      primary: `${r}, ${g}, ${b}`,
+      secondary: `${Math.min(255, r + 20)}, ${Math.min(
+        255,
+        g + 20
+      )}, ${Math.min(255, b + 20)}`,
+    };
+  };
+
   // Cursor size based on state
   const getCursorSize = useCallback(() => {
     switch (cursorState) {
@@ -32,41 +102,42 @@ const CustomCursor = () => {
 
   // Get accent-based colors
   const getAccentColors = useCallback(() => {
-    const baseColors = {
-      purple: {
-        primary: "156, 81, 255",
-        secondary: "139, 92, 246",
-      },
-      blue: {
-        primary: "59, 130, 246",
-        secondary: "96, 165, 250",
-      },
-      pink: {
-        primary: "236, 72, 153",
-        secondary: "244, 114, 182",
-      },
-      green: {
-        primary: "34, 197, 94",
-        secondary: "74, 222, 128",
-      },
-      orange: {
-        primary: "249, 115, 22",
-        secondary: "251, 146, 60",
-      },
-    };
+    const themeColors = getComputedThemeColors();
+    if (!themeColors) {
+      // Fallback colors
+      const baseColors = {
+        purple: { primary: "156, 81, 255", secondary: "139, 92, 246" },
+        blue: { primary: "59, 130, 246", secondary: "96, 165, 250" },
+        pink: { primary: "236, 72, 153", secondary: "244, 114, 182" },
+        green: { primary: "34, 197, 94", secondary: "74, 222, 128" },
+        orange: { primary: "249, 115, 22", secondary: "251, 146, 60" },
+      };
+      const colors = baseColors[accent];
+      const opacity = isDark ? 0.8 : 0.6;
 
-    const colors = baseColors[accent];
+      return {
+        default: `rgba(${colors.primary}, ${opacity * 0.3})`,
+        hover: `rgba(${colors.primary}, ${opacity * 0.2})`,
+        hoverBorder: `rgba(${colors.primary}, ${opacity})`,
+        click: `rgba(${colors.primary}, ${opacity})`,
+        trail: `rgba(${colors.secondary}, ${opacity * 0.5})`,
+        clickEffect: `rgba(${colors.primary}, ${opacity * 0.2})`,
+        clickEffectBorder: `rgba(${colors.primary}, ${opacity})`,
+        shadow: `rgba(${colors.primary}, ${opacity * 0.4})`,
+      };
+    }
+
     const opacity = isDark ? 0.8 : 0.6;
 
     return {
-      default: `rgba(${colors.primary}, ${opacity * 0.3})`,
-      hover: `rgba(${colors.primary}, ${opacity * 0.2})`,
-      hoverBorder: `rgba(${colors.primary}, ${opacity})`,
-      click: `rgba(${colors.primary}, ${opacity})`,
-      trail: `rgba(${colors.secondary}, ${opacity * 0.5})`,
-      clickEffect: `rgba(${colors.primary}, ${opacity * 0.2})`,
-      clickEffectBorder: `rgba(${colors.primary}, ${opacity})`,
-      shadow: `rgba(${colors.primary}, ${opacity * 0.4})`,
+      default: `rgba(${themeColors.primary}, ${opacity * 0.3})`,
+      hover: `rgba(${themeColors.primary}, ${opacity * 0.2})`,
+      hoverBorder: `rgba(${themeColors.primary}, ${opacity})`,
+      click: `rgba(${themeColors.primary}, ${opacity})`,
+      trail: `rgba(${themeColors.secondary}, ${opacity * 0.5})`,
+      clickEffect: `rgba(${themeColors.primary}, ${opacity * 0.2})`,
+      clickEffectBorder: `rgba(${themeColors.primary}, ${opacity})`,
+      shadow: `rgba(${themeColors.primary}, ${opacity * 0.4})`,
     };
   }, [accent, isDark]);
 

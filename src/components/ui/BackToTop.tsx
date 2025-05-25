@@ -53,9 +53,9 @@ const BackToTop: React.FC<BackToTopProps> = ({
 
   // Position classes
   const positionClasses = {
-    "bottom-right": "bottom-8 right-8",
-    "bottom-left": "bottom-8 left-8",
-    "bottom-center": "bottom-8 left-1/2 -translate-x-1/2",
+    "bottom-right": "bottom-4 right-4",
+    "bottom-left": "bottom-4 left-4",
+    "bottom-center": "bottom-4 left-1/2 -translate-x-1/2",
   };
 
   // Get CSS custom properties that are already set by ThemeContext
@@ -81,7 +81,7 @@ const BackToTop: React.FC<BackToTopProps> = ({
             borderColor: borderColor,
             boxShadow: `0 4px 20px ${primaryGlow}`,
             backgroundColor: isDark
-              ? "rgba(17, 24, 39, 0.9)"
+              ? "rgba(15, 21, 39, 0.9)"
               : "rgba(255, 255, 255, 0.9)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
