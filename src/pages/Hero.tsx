@@ -384,7 +384,6 @@ const Hero: React.FC = () => {
             {/* Main title */}
             <motion.div variants={titleVariants} className="space-y-4">
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
-                <span className="block">Hi, I'm</span>
                 <span className="block" style={{ color: accentColors.primary }}>
                   Ilias Ahmed
                 </span>
