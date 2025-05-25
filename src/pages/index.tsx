@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect, Suspense, useMemo } from "react";
 import Hero from "@/pages/Hero";
 import ScrollProgressBar from "@/components/ui/ScrollProgressBar";
+import BackToTop from "@/components/ui/BackToTop";
 import { NavigationProvider } from "@/contexts/NavigationContext";
 import Navigation from "@/components/navigation/Navigation";
 import CustomCursor from "@/components/ui/CustomCursor";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useLocation, useNavigate } from "react-router-dom";
-
 const Toaster = React.lazy(() =>
   import("@/components/ui/sonner").then((mod) => ({ default: mod.Toaster }))
 );
@@ -19,7 +19,7 @@ const ProjectsSection = React.lazy(() => import("@/components/projects"));
 const ContactSection = React.lazy(() => import("@/components/contact"));
 
 /**
- * Main Index component - Optimized for performance
+ * Main Index component - Optimized for performance with proper theming
  */
 const Index = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -230,8 +230,11 @@ const Index = () => {
             enableDots={!isMobile}
             enableVoice={!isMobile}
             enableCommandPalette={true}
-            enableBackToTop={true}
+            enableBackToTop={false} // Disable it here since we're adding it separately
           />
+
+          {/* Back to Top Button - Add this */}
+          <BackToTop threshold={300} position="bottom-right" />
 
           {/* Scroll progress indicator */}
           <ScrollProgressBar progress={scrollProgress} />
