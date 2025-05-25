@@ -17,6 +17,22 @@ export interface ThemeOptions {
   accent: ThemeAccent;
 }
 
+// Enhanced theme utilities
+export interface ThemeColors {
+  primary: string;
+  secondary: string;
+  background: string;
+  foreground: string;
+  muted: string;
+  border: string;
+  accent: {
+    primary: string;
+    secondary: string;
+    muted: string;
+    alpha: (opacity: number) => string;
+  };
+}
+
 interface ThemeContextType {
   mode: ThemeMode;
   accent: ThemeAccent;
@@ -28,10 +44,78 @@ interface ThemeContextType {
   isDark: boolean;
   systemTheme: "light" | "dark";
   setThemeOptions: (options: Partial<ThemeOptions>) => void;
+  // Enhanced theme utilities
+  getThemeColors: () => ThemeColors;
+  getAccentColors: () => Record<string, string>;
+  cssVars: Record<string, string>;
 }
 
 const DEFAULT_THEME: ThemeMode = "system";
 const DEFAULT_ACCENT: ThemeAccent = "purple";
+
+// Optimized accent color definitions
+const ACCENT_COLOR_MAP = {
+  purple: {
+    hsl: "267.1 84% 58.8%",
+    hex: "#8b5cf6",
+    rgb: "139, 92, 246",
+    variants: {
+      50: "#faf5ff",
+      100: "#f3e8ff",
+      500: "#8b5cf6",
+      600: "#7c3aed",
+      900: "#4c1d95",
+    },
+  },
+  blue: {
+    hsl: "213.1 93.9% 67.8%",
+    hex: "#3b82f6",
+    rgb: "59, 130, 246",
+    variants: {
+      50: "#eff6ff",
+      100: "#dbeafe",
+      500: "#3b82f6",
+      600: "#2563eb",
+      900: "#1e3a8a",
+    },
+  },
+  pink: {
+    hsl: "326.8 85.4% 60.8%",
+    hex: "#ec4899",
+    rgb: "236, 72, 153",
+    variants: {
+      50: "#fdf2f8",
+      100: "#fce7f3",
+      500: "#ec4899",
+      600: "#db2777",
+      900: "#831843",
+    },
+  },
+  green: {
+    hsl: "142.1 76.2% 36.3%",
+    hex: "#10b981",
+    rgb: "16, 185, 129",
+    variants: {
+      50: "#ecfdf5",
+      100: "#d1fae5",
+      500: "#10b981",
+      600: "#059669",
+      900: "#064e3b",
+    },
+  },
+  orange: {
+    hsl: "24.6 95% 53.1%",
+    hex: "#f59e0b",
+    rgb: "245, 158, 11",
+    variants: {
+      50: "#fffbeb",
+      100: "#fef3c7",
+      500: "#f59e0b",
+      600: "#d97706",
+      900: "#92400e",
+    },
+  },
+} as const;
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
@@ -60,7 +144,7 @@ export function ThemeProvider({
       : "light";
   });
 
-  // Initialize theme options
+  // Initialize theme options with improved persistence
   const [themeOptions, setThemeOptionsState] = useState<ThemeOptions>(() => {
     if (typeof window === "undefined") {
       return {
@@ -69,19 +153,76 @@ export function ThemeProvider({
       };
     }
 
-    const savedTheme = localStorage.getItem("theme") as ThemeMode;
-    const savedAccent = localStorage.getItem("accent") as ThemeAccent;
+    try {
+      const savedTheme = localStorage.getItem("theme") as ThemeMode;
+      const savedAccent = localStorage.getItem("accent") as ThemeAccent;
 
-    return {
-      mode: savedTheme ?? defaultOptions.mode ?? DEFAULT_THEME,
-      accent: savedAccent ?? defaultOptions.accent ?? DEFAULT_ACCENT,
-    };
+      return {
+        mode: savedTheme ?? defaultOptions.mode ?? DEFAULT_THEME,
+        accent: savedAccent ?? defaultOptions.accent ?? DEFAULT_ACCENT,
+      };
+    } catch (error) {
+      console.warn("Failed to load theme from localStorage:", error);
+      return {
+        mode: defaultOptions.mode ?? DEFAULT_THEME,
+        accent: defaultOptions.accent ?? DEFAULT_ACCENT,
+      };
+    }
   });
 
   // Compute resolved theme
   const resolvedTheme: "light" | "dark" = useMemo(() => {
     return themeOptions.mode === "system" ? systemTheme : themeOptions.mode;
   }, [themeOptions.mode, systemTheme]);
+
+  // Enhanced theme colors getter
+  const getThemeColors = useCallback((): ThemeColors => {
+    const accentData = ACCENT_COLOR_MAP[themeOptions.accent];
+    const isDark = resolvedTheme === "dark";
+
+    return {
+      primary: `hsl(${accentData.hsl})`,
+      secondary: isDark ? "hsl(0 0% 98%)" : "hsl(0 0% 9%)",
+      background: isDark ? "hsl(0 0% 9%)" : "hsl(0 0% 98%)",
+      foreground: isDark ? "hsl(0 0% 98%)" : "hsl(0 0% 9%)",
+      muted: isDark ? "hsl(0 0% 15%)" : "hsl(0 0% 96%)",
+      border: isDark ? "hsl(0 0% 20%)" : "hsl(0 0% 90%)",
+      accent: {
+        primary: accentData.hex,
+        secondary: accentData.variants[600],
+        muted: accentData.variants[100],
+        alpha: (opacity: number) => `rgba(${accentData.rgb}, ${opacity})`,
+      },
+    };
+  }, [themeOptions.accent, resolvedTheme]);
+
+  // Enhanced accent colors getter
+  const getAccentColors = useCallback(() => {
+    const accentData = ACCENT_COLOR_MAP[themeOptions.accent];
+    return {
+      primary: accentData.hex,
+      secondary: accentData.variants[600],
+      tertiary: accentData.variants[500],
+      glow: `rgba(${accentData.rgb}, 0.3)`,
+      shadow: `rgba(${accentData.rgb}, 0.25)`,
+      border: `rgba(${accentData.rgb}, 0.5)`,
+      gradient: `linear-gradient(135deg, ${accentData.variants[400]} 0%, ${accentData.variants[600]} 100%)`,
+      mesh: `linear-gradient(135deg, ${accentData.variants[500]}20 0%, ${accentData.variants[600]}20 50%, ${accentData.variants[700]}20 100%)`,
+    };
+  }, [themeOptions.accent]);
+
+  // CSS variables for direct access
+  const cssVars = useMemo(() => {
+    const colors = getThemeColors();
+    return {
+      "--theme-primary": colors.primary,
+      "--theme-secondary": colors.secondary,
+      "--theme-background": colors.background,
+      "--theme-foreground": colors.foreground,
+      "--theme-accent": colors.accent.primary,
+      "--theme-accent-alpha": colors.accent.alpha(0.1),
+    };
+  }, [getThemeColors]);
 
   // Listen for system theme changes
   useEffect(() => {
@@ -97,72 +238,54 @@ export function ThemeProvider({
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
-  // Apply theme to DOM
+  // Optimized DOM theme application
   useLayoutEffect(() => {
     if (typeof window === "undefined") return;
 
     const { mode, accent } = themeOptions;
     const root = document.documentElement;
 
-    // Remove existing theme classes
-    root.classList.remove("light", "dark");
-    root.classList.add(resolvedTheme);
+    // Batch DOM updates
+    requestAnimationFrame(() => {
+      // Remove existing theme classes
+      root.classList.remove("light", "dark");
+      root.classList.add(resolvedTheme);
 
-    // Set accent color attribute
-    root.setAttribute("data-accent", accent);
+      // Set accent color attribute
+      root.setAttribute("data-accent", accent);
 
-    // Define accent color mappings
-    const accentColors = {
-      purple: {
-        primary: "267.1 84% 58.8%",
-        secondary: "270.5 80.9% 71.6%",
-        muted: "267.1 84% 58.8%",
-      },
-      blue: {
-        primary: "213.1 93.9% 67.8%",
-        secondary: "216.9 95.2% 76.9%",
-        muted: "213.1 93.9% 67.8%",
-      },
-      pink: {
-        primary: "326.8 85.4% 60.8%",
-        secondary: "327.3 87.1% 72%",
-        muted: "326.8 85.4% 60.8%",
-      },
-      green: {
-        primary: "142.1 76.2% 36.3%",
-        secondary: "138.5 76.5% 46.7%",
-        muted: "142.1 76.2% 36.3%",
-      },
-      orange: {
-        primary: "24.6 95% 53.1%",
-        secondary: "32.1 94.6% 63.7%",
-        muted: "24.6 95% 53.1%",
-      },
-    };
+      // Apply CSS custom properties efficiently
+      const accentData = ACCENT_COLOR_MAP[accent];
+      const updates = [
+        ["--primary", accentData.hsl],
+        ["--accent-current", accentData.hex],
+        ["--accent-current-rgb", accentData.rgb],
+      ];
 
-    // Apply CSS custom properties
-    const colors = accentColors[accent];
-    root.style.setProperty("--primary", colors.primary);
-    root.style.setProperty(
-      "--primary-foreground",
-      resolvedTheme === "dark" ? "0 0% 98%" : "0 0% 9%"
-    );
+      updates.forEach(([property, value]) => {
+        root.style.setProperty(property, value);
+      });
 
-    // Store preferences
-    localStorage.setItem("theme", mode);
-    localStorage.setItem("accent", accent);
+      // Store preferences
+      try {
+        localStorage.setItem("theme", mode);
+        localStorage.setItem("accent", accent);
+      } catch (error) {
+        console.warn("Failed to save theme to localStorage:", error);
+      }
 
-    // Update meta theme-color
-    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute(
-        "content",
-        resolvedTheme === "dark" ? "#0a0a0a" : "#ffffff"
-      );
-    }
+      // Update meta theme-color
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute(
+          "content",
+          resolvedTheme === "dark" ? "#0a0a0a" : "#ffffff"
+        );
+      }
+    });
   }, [themeOptions, resolvedTheme]);
 
-  // Theme management functions
+  // Optimized theme management functions
   const setThemeOptions = useCallback(
     (options: Partial<ThemeOptions>): void => {
       setThemeOptionsState((prev) => ({ ...prev, ...options }));
@@ -209,6 +332,9 @@ export function ThemeProvider({
       isDark: resolvedTheme === "dark",
       systemTheme,
       setThemeOptions,
+      getThemeColors,
+      getAccentColors,
+      cssVars,
     }),
     [
       themeOptions.mode,
@@ -219,6 +345,9 @@ export function ThemeProvider({
       setAccent,
       systemTheme,
       setThemeOptions,
+      getThemeColors,
+      getAccentColors,
+      cssVars,
     ]
   );
 
@@ -227,4 +356,20 @@ export function ThemeProvider({
       {children}
     </ThemeContext.Provider>
   );
+}
+
+// Utility hooks for specific theme aspects
+export function useThemeColors(): ThemeColors {
+  const { getThemeColors } = useTheme();
+  return useMemo(() => getThemeColors(), [getThemeColors]);
+}
+
+export function useAccentColors() {
+  const { getAccentColors } = useTheme();
+  return useMemo(() => getAccentColors(), [getAccentColors]);
+}
+
+export function useIsDark(): boolean {
+  const { isDark } = useTheme();
+  return isDark;
 }
