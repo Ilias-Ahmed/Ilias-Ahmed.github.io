@@ -1,7 +1,4 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-
-@custom-variant dark (&:is(.dark *));
 
 /* Enhanced CSS Custom Properties */
 :root {
@@ -115,7 +112,8 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--border);
+    outline-color: oklch(from var(--ring) l c h / 0.5);
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE and Edge */
   }
@@ -130,11 +128,11 @@
     width: 100%;
     margin: 0;
     padding: 0;
-    cursor: none; /* Custom cursor */
   }
 
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--background);
+    color: var(--foreground);
     width: 100%;
     overflow-x: hidden;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -186,15 +184,6 @@
     filter: brightness(1.2);
   }
 
-  /* Enhanced animation classes */
-  .animate-fade-in {
-    animation: fadeIn var(--animation-duration-normal) var(--animation-ease);
-  }
-
-  .animate-slide-up {
-    animation: slideUp var(--animation-duration-normal) var(--animation-ease);
-  }
-
   /* Responsive hiding classes */
   .hide-scrollbar {
     scrollbar-width: none;
@@ -220,36 +209,6 @@
 }
 
 @layer utilities {
-  /* Custom animations */
-  @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes slideUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes pulse-accent {
-    0%, 100% {
-      box-shadow: 0 0 0 0 var(--accent-alpha-50);
-    }
-    70% {
-      box-shadow: 0 0 0 10px transparent;
-    }
-  }
-
-  .animate-pulse-accent {
-    animation: pulse-accent 2s infinite;
-  }
-
   /* Responsive utilities */
   .container-responsive {
     container-type: inline-size;

@@ -265,10 +265,10 @@ const GlobalBackground: React.FC = () => {
   );
 
   const renderNeuralNetwork = useCallback(
-    (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+    (ctx: CanvasRenderingContext2D) => {
       const nodes = neuralNodesRef.current;
       const colors = getThemeColors();
-      const { bassFreq, averageLevel } = audioAnalysis;
+      const { bassFreq } = audioAnalysis;
 
       nodes.forEach((node, index) => {
         if (config.enableAudioVisualization && isPlaying) {
@@ -468,9 +468,9 @@ const GlobalBackground: React.FC = () => {
   );
 
   const renderMatrix = useCallback(
-    (ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement) => {
+    (ctx: CanvasRenderingContext2D) => {
       const colors = getThemeColors();
-      const { bassFreq, averageLevel } = audioAnalysis;
+      const { bassFreq } = audioAnalysis;
 
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$%^&*()";
       const fontSize = 14;
