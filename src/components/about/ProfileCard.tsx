@@ -1,7 +1,8 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { ArrowRight, Download, Github, Linkedin, Twitter } from "lucide-react";
-import profileImage from "/images/profile.png?url"; // Adjust the path as necessary
+import { useTheme } from "@/contexts/ThemeContext";
+import profileImage from "/images/profile.png?url";
 import ResumeViewer from "../ui/ResumeViewer";
 import { triggerHapticFeedback } from "@/utils/haptics";
 
@@ -10,13 +11,14 @@ const ProfileCard = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [showResume, setShowResume] = useState(false);
 
+  const { isDark, getAccentColors } = useTheme();
+  const accentColors = getAccentColors();
+
   useEffect(() => {
-    // Trigger animations after component mounts
     const timer = setTimeout(() => setIsVisible(true), 300);
     return () => clearTimeout(timer);
   }, []);
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -59,7 +61,6 @@ const ProfileCard = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
-      {/* Main profile section */}
       <div className="grid lg:grid-cols-2 gap-12 items-center">
         {/* Profile Image with Card Flip */}
         <motion.div
@@ -69,8 +70,18 @@ const ProfileCard = () => {
           className="relative mx-auto max-w-md w-full"
         >
           {/* Background decorative elements */}
-          <div className="absolute -z-10 -top-10 -left-10 w-full h-full bg-gradient-to-br from-primary/10 to-purple-500/5 rounded-full blur-lg" />
-          <div className="absolute -z-10 bottom-10 right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-md" />
+          <div
+            className="absolute -z-10 -top-10 -left-10 w-full h-full rounded-full blur-lg"
+            style={{
+              background: `linear-gradient(135deg, ${accentColors.primary}10, ${accentColors.secondary}05)`,
+            }}
+          />
+          <div
+            className="absolute -z-10 bottom-10 right-10 w-40 h-40 rounded-full blur-md"
+            style={{
+              backgroundColor: `${accentColors.primary}10`,
+            }}
+          />
 
           {/* Card with flip effect */}
           <div
@@ -93,7 +104,6 @@ const ProfileCard = () => {
                 style={{ backfaceVisibility: "hidden" }}
               >
                 <div className="relative h-full w-full">
-                  {/* Profile image */}
                   <img
                     src={profileImage}
                     alt="Ilias Ahmed"
@@ -101,15 +111,31 @@ const ProfileCard = () => {
                   />
 
                   {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent opacity-60" />
+                  <div
+                    className="absolute inset-0 opacity-60"
+                    style={{
+                      background: `linear-gradient(to top, ${
+                        isDark
+                          ? "rgba(17, 24, 39, 1)"
+                          : "rgba(255, 255, 255, 1)"
+                      } 0%, ${
+                        isDark
+                          ? "rgba(17, 24, 39, 0.2)"
+                          : "rgba(255, 255, 255, 0.2)"
+                      } 50%, transparent 100%)`,
+                    }}
+                  />
 
                   {/* Social links */}
                   <div className="absolute bottom-0 left-0 right-0 p-6 flex justify-center gap-4">
                     {[
-                      { icon: <Github size={18} />, url: "https://github.com" },
+                      {
+                        icon: <Github size={18} />,
+                        url: "https://github.com/Ilias-Ahmed",
+                      },
                       {
                         icon: <Linkedin size={18} />,
-                        url: "https://linkedin.com",
+                        url: "https://www.linkedin.com/in/ilias-ahmed9613/",
                       },
                       {
                         icon: <Twitter size={18} />,
@@ -121,8 +147,20 @@ const ProfileCard = () => {
                         href={social.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/20 hover:bg-primary/80 transition-colors"
-                        whileHover={{ scale: 1.1, y: -5 }}
+                        className="w-10 h-10 rounded-full backdrop-blur-md flex items-center justify-center border transition-colors"
+                        style={{
+                          backgroundColor: isDark
+                            ? "rgba(255,255,255,0.1)"
+                            : "rgba(0,0,0,0.1)",
+                          borderColor: isDark
+                            ? "rgba(255,255,255,0.2)"
+                            : "rgba(0,0,0,0.2)",
+                        }}
+                        whileHover={{
+                          scale: 1.1,
+                          y: -5,
+                          backgroundColor: `${accentColors.primary}80`,
+                        }}
                         whileTap={{ scale: 0.95 }}
                       >
                         {social.icon}
@@ -132,7 +170,15 @@ const ProfileCard = () => {
 
                   {/* Flip indicator */}
                   <motion.div
-                    className="absolute top-4 right-4 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-xs text-white/80 border border-white/20"
+                    className="absolute top-4 right-4 backdrop-blur-md px-3 py-1 rounded-full text-xs border"
+                    style={{
+                      backgroundColor: isDark
+                        ? "rgba(255,255,255,0.1)"
+                        : "rgba(0,0,0,0.1)",
+                      borderColor: isDark
+                        ? "rgba(255,255,255,0.2)"
+                        : "rgba(0,0,0,0.2)",
+                    }}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 1 }}
@@ -150,9 +196,22 @@ const ProfileCard = () => {
                   transform: "rotateY(180deg)",
                 }}
               >
-                <div className="h-full w-full bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md border border-white/10 shadow-xl p-8 flex flex-col">
-                  <h4 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-primary rounded-full"></span>
+                <div
+                  className="h-full w-full backdrop-blur-md border shadow-xl p-8 flex flex-col"
+                  style={{
+                    backgroundColor: isDark
+                      ? "rgba(17, 24, 39, 0.95)"
+                      : "rgba(255, 255, 255, 0.95)",
+                    borderColor: isDark
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <h4 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                    <span
+                      className="w-2 h-2 rounded-full"
+                      style={{ backgroundColor: accentColors.primary }}
+                    />
                     <span>Quick Facts</span>
                   </h4>
 
@@ -168,28 +227,37 @@ const ProfileCard = () => {
                         variants={itemVariants}
                         className="flex items-start gap-4"
                       >
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
+                        <div
+                          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{
+                            backgroundColor: `${accentColors.primary}20`,
+                            color: accentColors.primary,
+                          }}
+                        >
                           {fact.icon}
                         </div>
                         <div>
-                          <h5 className="font-medium text-white text-base">
+                          <h5 className="font-medium text-base">
                             {fact.title}
                           </h5>
-                          <p className="text-gray-400 text-sm">
-                            {fact.content}
-                          </p>
+                          <p className="opacity-70 text-sm">{fact.content}</p>
                         </div>
                       </motion.li>
                     ))}
                   </motion.ul>
 
                   <motion.div
-                    className="mt-4 pt-3 border-t border-white/10 text-center"
+                    className="mt-4 pt-3 border-t text-center"
+                    style={{
+                      borderColor: isDark
+                        ? "rgba(255,255,255,0.1)"
+                        : "rgba(0,0,0,0.1)",
+                    }}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.8 }}
                   >
-                    <p className="text-sm text-white/70">Tap to flip back</p>
+                    <p className="text-sm opacity-70">Tap to flip back</p>
                   </motion.div>
                 </div>
               </div>
@@ -206,12 +274,21 @@ const ProfileCard = () => {
         >
           <motion.div variants={itemVariants}>
             <div className="inline-block">
-              <div className="flex items-center gap-2 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-full px-4 py-1.5 text-sm text-primary font-medium mb-4">
-                <span className="w-2 h-2 bg-primary rounded-full"></span>
+              <div
+                className="flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium mb-4"
+                style={{
+                  background: `linear-gradient(135deg, ${accentColors.primary}20, ${accentColors.secondary}20)`,
+                  color: accentColors.primary,
+                }}
+              >
+                <span
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: accentColors.primary }}
+                />
                 <span>Full Stack Developer</span>
               </div>
             </div>
-            <h2 className="text-4xl lg:text-5xl font-bold mb-4 text-white">
+            <h2 className="text-4xl lg:text-5xl font-bold mb-4">
               <motion.span
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -224,12 +301,20 @@ const ProfileCard = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400"
+                className="inline-block bg-clip-text text-transparent"
+                style={{
+                  backgroundImage: `linear-gradient(135deg, ${accentColors.primary} 0%, ${accentColors.secondary} 100%)`,
+                }}
               >
                 Ilias Ahmed
               </motion.span>
             </h2>
-            <div className="w-20 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full"></div>
+            <div
+              className="w-20 h-1 rounded-full"
+              style={{
+                background: `linear-gradient(135deg, ${accentColors.primary} 0%, ${accentColors.secondary} 100%)`,
+              }}
+            />
           </motion.div>
 
           <motion.div variants={itemVariants} className="space-y-4">
@@ -243,7 +328,7 @@ const ProfileCard = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 + i * 0.1 }}
-                className="text-gray-300 leading-relaxed"
+                className="opacity-80 leading-relaxed"
               >
                 {paragraph}
               </motion.p>
@@ -258,7 +343,20 @@ const ProfileCard = () => {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.5 + i * 0.1 }}
-                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-gray-300 hover:bg-primary/10 hover:border-primary/30 transition-colors"
+                  className="px-4 py-2 border rounded-full text-sm transition-colors"
+                  style={{
+                    backgroundColor: isDark
+                      ? "rgba(255,255,255,0.05)"
+                      : "rgba(0,0,0,0.05)",
+                    borderColor: isDark
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.1)",
+                  }}
+                  whileHover={{
+                    backgroundColor: `${accentColors.primary}10`,
+                    borderColor: `${accentColors.primary}30`,
+                    color: accentColors.primary,
+                  }}
                 >
                   {skill}
                 </motion.span>
@@ -272,8 +370,15 @@ const ProfileCard = () => {
           >
             <motion.a
               href="/contact"
-              className="px-6 py-3 bg-gradient-to-r from-primary to-purple-600 text-white rounded-full flex items-center gap-2 transition-all hover:shadow-lg hover:shadow-primary/20"
-              whileHover={{ scale: 1.03 }}
+              className="px-6 py-3 text-white rounded-full flex items-center gap-2 transition-all"
+              style={{
+                background: `linear-gradient(135deg, ${accentColors.primary} 0%, ${accentColors.secondary} 100%)`,
+                boxShadow: `0 4px 14px ${accentColors.shadow}`,
+              }}
+              whileHover={{
+                scale: 1.03,
+                boxShadow: `0 6px 20px ${accentColors.shadow}`,
+              }}
               whileTap={{ scale: 0.98 }}
             >
               <span>Get in Touch</span>
@@ -285,8 +390,20 @@ const ProfileCard = () => {
                 setShowResume(true);
                 triggerHapticFeedback();
               }}
-              className="px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-full flex items-center gap-2 transition-all"
-              whileHover={{ scale: 1.03 }}
+              className="px-6 py-3 rounded-full flex items-center gap-2 transition-all border"
+              style={{
+                backgroundColor: isDark
+                  ? "rgba(255,255,255,0.05)"
+                  : "rgba(0,0,0,0.05)",
+                borderColor: isDark
+                  ? "rgba(255,255,255,0.1)"
+                  : "rgba(0,0,0,0.1)",
+              }}
+              whileHover={{
+                scale: 1.03,
+                backgroundColor: `${accentColors.primary}10`,
+                borderColor: `${accentColors.primary}30`,
+              }}
               whileTap={{ scale: 0.98 }}
             >
               <span>Resume</span>
@@ -309,16 +426,29 @@ const ProfileCard = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9 + i * 0.1 }}
-            className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 transition-colors group"
+            className="backdrop-blur-sm border rounded-xl p-6 text-center transition-colors group"
+            style={{
+              backgroundColor: isDark
+                ? "rgba(255,255,255,0.05)"
+                : "rgba(0,0,0,0.05)",
+              borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+            }}
+            whileHover={{
+              backgroundColor: `${accentColors.primary}10`,
+              borderColor: `${accentColors.primary}30`,
+            }}
           >
             <motion.h3
-              className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400"
+              className="text-3xl font-bold bg-clip-text text-transparent"
+              style={{
+                backgroundImage: `linear-gradient(135deg, ${accentColors.primary} 0%, ${accentColors.secondary} 100%)`,
+              }}
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 300 }}
             >
               {item.number}
             </motion.h3>
-            <p className="text-gray-400 text-sm mt-2 group-hover:text-gray-300 transition-colors">
+            <p className="opacity-70 text-sm mt-2 group-hover:opacity-90 transition-opacity">
               {item.label}
             </p>
           </motion.div>
