@@ -398,9 +398,9 @@ const Hero: React.FC = () => {
               variants={itemVariants}
               className="text-lg md:text-xl opacity-80 max-w-2xl leading-relaxed"
             >
-              Creating outstanding digital experiences with cutting-edge
-              technologies. I turn ideas into powerful, scalable solutions that
-              deliver real impact.
+              Crafting exceptional digital experiences with modern technologies.
+              I transform ideas into powerful, scalable solutions that make a
+              real impact.
             </motion.p>
 
             {/* Action buttons */}
