@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Mail, MapPin } from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type ContactInfoItem = {
   icon: React.ReactNode;
@@ -9,6 +10,9 @@ type ContactInfoItem = {
 };
 
 const ContactInfo = () => {
+  const { isDark, getAccentColors } = useTheme();
+  const accentColors = getAccentColors();
+
   const contactInfo: ContactInfoItem[] = [
     {
       icon: <Mail className="w-5 h-5" />,
@@ -25,16 +29,33 @@ const ContactInfo = () => {
   ];
 
   return (
-    <motion.div className="cosmic-card p-8 rounded-2xl backdrop-blur-sm border border-white/10 relative overflow-hidden">
+    <motion.div
+      className="p-8 rounded-2xl backdrop-blur-sm border relative overflow-hidden theme-transition"
+      style={{
+        backgroundColor: isDark
+          ? "rgba(255,255,255,0.05)"
+          : "rgba(255,255,255,0.8)",
+        borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+      }}
+    >
       {/* Cosmic background elements */}
       <div className="absolute inset-0 -z-10 opacity-20">
-        <div className="absolute top-1/4 left-1/4 w-32 h-32 rounded-full bg-primary/30 blur-2xl" />
-        <div className="absolute bottom-1/3 right-1/4 w-24 h-24 rounded-full bg-accent/30 blur-2xl" />
+        <div
+          className="absolute top-1/4 left-1/4 w-32 h-32 rounded-full blur-2xl"
+          style={{ backgroundColor: `${accentColors.primary}30` }}
+        />
+        <div
+          className="absolute bottom-1/3 right-1/4 w-24 h-24 rounded-full blur-2xl"
+          style={{ backgroundColor: `${accentColors.secondary}30` }}
+        />
       </div>
 
       <h3 className="text-2xl font-bold mb-6 inline-flex items-center">
-        <span className="bg-primary/20 p-2 rounded-lg mr-3">
-          <Mail className="w-5 h-5 text-primary" />
+        <span
+          className="p-2 rounded-lg mr-3"
+          style={{ backgroundColor: `${accentColors.primary}20` }}
+        >
+          <Mail className="w-5 h-5" style={{ color: accentColors.primary }} />
         </span>
         Contact Information
       </h3>
@@ -48,14 +69,34 @@ const ContactInfo = () => {
             transition={{ delay: index * 0.1 }}
             className="flex items-center group"
           >
-            <div className="w-12 h-12 flex items-center justify-center bg-primary/10 group-hover:bg-primary/20 rounded-xl mr-4 transition-colors duration-300">
-              {item.icon}
+            <div
+              className="w-12 h-12 flex items-center justify-center rounded-xl mr-4 transition-all duration-300 group-hover:scale-110"
+              style={{
+                backgroundColor: `${accentColors.primary}10`,
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = `${accentColors.primary}20`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = `${accentColors.primary}10`;
+              }}
+            >
+              <span style={{ color: accentColors.primary }}>{item.icon}</span>
             </div>
             <div>
-              <p className="text-sm text-gray-400">{item.label}</p>
+              <p className="text-sm opacity-70">{item.label}</p>
               <a
                 href={item.href}
-                className="text-white hover:text-primary transition-colors duration-300"
+                className="transition-colors duration-300 hover:underline"
+                style={{
+                  color: "inherit",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = accentColors.primary;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = "inherit";
+                }}
                 target={item.label === "Location" ? "_blank" : undefined}
                 rel={
                   item.label === "Location" ? "noopener noreferrer" : undefined

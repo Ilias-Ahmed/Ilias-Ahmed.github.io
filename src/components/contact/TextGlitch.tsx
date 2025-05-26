@@ -1,15 +1,23 @@
 import { triggerHapticFeedback } from "@/utils/haptics";
 import { useEffect, useRef } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface TextGlitchProps {
   text: string;
   className?: string;
+  style?: React.CSSProperties;
 }
 
-const TextGlitch: React.FC<TextGlitchProps> = ({ text, className = "" }) => {
+const TextGlitch: React.FC<TextGlitchProps> = ({
+  text,
+  className = "",
+  style = {}
+}) => {
   const textRef = useRef<HTMLHeadingElement>(null);
   const originalText = useRef(text);
   const glitchChars = "!<>-_\\/[]{}—=+*^?#________";
+  const { getAccentColors } = useTheme();
+  const accentColors = getAccentColors();
 
   const intervalRef = useRef<number | null>(null);
 
@@ -48,10 +56,16 @@ const TextGlitch: React.FC<TextGlitchProps> = ({ text, className = "" }) => {
     };
   }, [text]);
 
+  const defaultStyle = {
+    backgroundImage: `linear-gradient(135deg, ${accentColors.primary} 0%, ${accentColors.secondary} 100%)`,
+    ...style,
+  };
+
   return (
     <h2
       ref={textRef}
-      className={className}
+      className={`cursor-pointer transition-all duration-300 hover:scale-105 ${className}`}
+      style={defaultStyle}
       onMouseEnter={startGlitch}
       onClick={startGlitch}
       onTouchStart={() => {

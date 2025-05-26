@@ -1,220 +1,559 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { triggerHapticFeedback } from "@/utils/haptics";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+import {
+  motion,
+  useMotionValue,
+  useSpring,
+  AnimatePresence,
+} from "framer-motion";
+import {
+  ChevronDown,
+  Download,
+  Github,
+  Linkedin,
+  Mail,
+  Code2,
+  Sparkles,
+  Terminal,
+  Zap,
+  ExternalLink,
+} from "lucide-react";
+import { useTheme } from "@/contexts/ThemeContext";
+import { useBackground } from "@/contexts/BackgroundContext";
+import { useNavigation } from "@/contexts/NavigationContext";
+import { useIsMobile } from "@/hooks/use-mobile";
+import ControlPanel from "@/components/ui/ControlPanel";
 
-const Hero = () => {
-  const navigate = useNavigate();
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isHovered, setIsHovered] = useState(false);
 
-  // Lightweight mouse tracking for subtle effects
+interface SocialLink {
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  href?: string;
+  action?: () => void;
+  label: string;
+  description: string;
+}
+
+// Constants
+const ROTATING_ROLES = [
+  "Full Stack Developer",
+  "UI/UX Designer",
+  "Cloud Architect",
+  "Tech Innovator",
+  "Problem Solver",
+  "Digital Creator",
+];
+
+const ROLE_ROTATION_INTERVAL = 3000;
+const PULSE_ANIMATION_DURATION = 2000;
+const FLOATING_ANIMATION_DURATION = 4000;
+const MOUSE_MOVE_MULTIPLIER = 0.05;
+
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      duration: 0.8,
+      staggerChildren: 0.15,
+      delayChildren: 0.2,
+    },
+  },
+};
+
+const itemVariants = {
+  hidden: { y: 50, opacity: 0 },
+  visible: {
+    y: 0,
+    opacity: 1,
+    transition: {
+      type: "spring",
+      stiffness: 100,
+      damping: 10,
+    },
+  },
+};
+
+const titleVariants = {
+  hidden: { opacity: 0, scale: 0.8 },
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
+      duration: 1,
+      ease: "easeOut",
+    },
+  },
+};
+
+// AccentColors type definition
+interface AccentColors {
+  primary: string;
+  border: string;
+  glow: string;
+}
+
+// Status Badge Component
+const StatusBadge: React.FC<{ accentColors: AccentColors; isDark: boolean }> = ({
+  accentColors,
+  isDark,
+}) => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
   useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      // Throttle mouse move calculations for performance
-      if (!window.requestAnimationFrame) return;
-
-      window.requestAnimationFrame(() => {
-        const x = e.clientX / window.innerWidth - 0.5;
-        const y = e.clientY / window.innerHeight - 0.5;
-        setMousePosition({ x, y });
-      });
-    };
-
-    window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    return () => window.removeEventListener("mousemove", handleMouseMove);
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
   }, []);
 
-  // Navigation handlers
-  const handleExploreClick = () => navigate("/about");
-  const handleContactClick = () => navigate("/contact");
+  const formatTime = useCallback((date: Date) => {
+    return date.toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }, []);
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
-      {/* Background gradient */}
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="fixed top-4 left-4 z-50"
+    >
       <div
-        className="absolute inset-0 bg-gradient-to-br from-purple-900/20 via-transparent to-pink-900/20"
+        className="inline-flex items-center gap-3 px-4 py-2 rounded-full text-sm
+          backdrop-blur-lg border shadow-lg transition-all duration-300"
         style={{
-          transform: `translate(${mousePosition.x * 10}px, ${
-            mousePosition.y * 10
-          }px)`,
+          backgroundColor: isDark
+            ? "rgba(17, 24, 39, 0.8)"
+            : "rgba(255, 255, 255, 0.8)",
+          borderColor: accentColors.border,
+          backdropFilter: "blur(20px)",
         }}
-      />
-
-      {/* Animated background grid */}
-      <div className="absolute inset-0 opacity-10">
-        <div className="h-full w-full bg-grid-pattern" />
-      </div>
-
-      {/* Content container */}
-      <div className="relative z-10 flex flex-col justify-center items-center px-4 min-h-screen">
+      >
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="max-w-4xl w-full text-center"
+          className="w-2 h-2 rounded-full"
+          style={{ backgroundColor: accentColors.primary }}
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [1, 0.7, 1],
+          }}
+          transition={{
+            duration: PULSE_ANIMATION_DURATION / 1000,
+            repeat: Infinity,
+          }}
+        />
+        <Sparkles size={14} style={{ color: accentColors.primary }} />
+        <span className="font-medium">Available for hire</span>
+        <span className="text-xs opacity-70">{formatTime(currentTime)}</span>
+      </div>
+    </motion.div>
+  );
+};
+
+// Floating Icon Component
+const FloatingIcon: React.FC<{
+  Icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>;
+  index: number;
+  accentColors: AccentColors;
+}> = ({ Icon, index, accentColors }) => {
+  const positions = [
+    { left: "10%", top: "15%" },
+    { left: "30%", top: "30%" },
+    { left: "50%", top: "45%" },
+    { left: "70%", top: "60%" },
+  ];
+
+  const position = positions[index] || positions[0];
+
+  return (
+    <motion.div
+      className="absolute p-2 rounded-lg backdrop-blur-sm border"
+      style={{
+        ...position,
+        backgroundColor: `${accentColors.primary}20`,
+        borderColor: `${accentColors.primary}30`,
+      }}
+      animate={{
+        y: [0, -10, 0],
+        rotate: [0, index % 2 === 0 ? 5 : -5, 0],
+      }}
+      transition={{
+        duration: FLOATING_ANIMATION_DURATION / 1000,
+        repeat: Infinity,
+        delay: index * 0.5,
+      }}
+      whileHover={{ scale: 1.2 }}
+    >
+      <Icon size={16} style={{ color: accentColors.primary }} />
+    </motion.div>
+  );
+};
+
+// Main Hero Component
+const Hero: React.FC = () => {
+  const [currentRole, setCurrentRole] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  const { isDark, getAccentColors } = useTheme();
+  const accentColors: AccentColors = getAccentColors() as unknown as AccentColors;
+  const { setCurrentSection } = useBackground();
+  const { navigateToSection } = useNavigation();
+  const isMobile = useIsMobile();
+
+  // Mouse tracking for parallax
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springConfig = useMemo(() => ({ stiffness: 100, damping: 30 }), []);
+  const x = useSpring(mouseX, springConfig);
+  const y = useSpring(mouseY, springConfig);
+
+  // Social links configuration
+  const socialLinks: SocialLink[] = useMemo(
+    () => [
+      {
+        icon: Github,
+        href: "https://github.com/Ilias-Ahmed",
+        label: "GitHub",
+        description: "View my open source projects",
+      },
+      {
+        icon: Linkedin,
+        href: "https://www.linkedin.com/in/ilias-ahmed9613/",
+        label: "LinkedIn",
+        description: "Connect with me professionally",
+      },
+      {
+        icon: Mail,
+        href: "mailto:ilias.ahmed.dev@gmail.com",
+        label: "Email",
+        description: "Get in touch directly",
+      },
+      {
+        icon: Download,
+        action: () => {
+          try {
+            const link = document.createElement("a");
+            link.href = "/resume.pdf";
+            link.download = "Ilias_Ahmed_Resume.pdf";
+            link.click();
+          } catch (error) {
+            console.error("Failed to download resume:", error);
+          }
+        },
+        label: "Resume",
+        description: "Download my CV",
+      },
+    ],
+    []
+  );
+
+  // Optimized mouse tracking
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (isMobile || !heroRef.current) return;
+
+      const rect = heroRef.current.getBoundingClientRect();
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      const mouseXPos =
+        (e.clientX - rect.left - centerX) * MOUSE_MOVE_MULTIPLIER;
+      const mouseYPos =
+        (e.clientY - rect.top - centerY) * MOUSE_MOVE_MULTIPLIER;
+
+      mouseX.set(mouseXPos);
+      mouseY.set(mouseYPos);
+    },
+    [mouseX, mouseY, isMobile]
+  );
+
+  // Handle social link clicks
+  const handleSocialClick = useCallback(
+    (social: SocialLink) => (e: React.MouseEvent) => {
+      e.preventDefault();
+
+      if (social.action) {
+        social.action();
+      } else if (social.href) {
+        window.open(social.href, "_blank", "noopener,noreferrer");
+      }
+    },
+    []
+  );
+
+  // Handle navigation
+  const handleViewWork = useCallback(() => {
+    navigateToSection("projects");
+  }, [navigateToSection]);
+
+  const handleGetInTouch = useCallback(() => {
+    navigateToSection("contact");
+  }, [navigateToSection]);
+
+  const handleScrollDown = useCallback(() => {
+    navigateToSection("about");
+  }, [navigateToSection]);
+
+  // Role rotation effect
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentRole((prev) => (prev + 1) % ROTATING_ROLES.length);
+    }, ROLE_ROTATION_INTERVAL);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Component mount effect
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoaded(true), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Set current section for background system
+  useEffect(() => {
+    setCurrentSection("hero");
+  }, [setCurrentSection]);
+
+  // Background styles
+  const backgroundStyles = useMemo(
+    () => ({
+      backgroundImage: isMobile
+        ? `url('https://cdn.pixabay.com/photo/2019/10/09/07/28/development-4536630_1280.png')`
+        : "none",
+      backgroundSize: "contain",
+      backgroundRepeat: "no-repeat",
+      backgroundPosition: "center right",
+    }),
+    [isMobile]
+  );
+
+  const floatingIcons = [Code2, Terminal, Zap, Sparkles];
+
+  return (
+    <section
+      ref={heroRef}
+      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      onMouseMove={handleMouseMove}
+      id="hero"
+      style={backgroundStyles}
+    >
+      {/* Status Badge */}
+      <StatusBadge accentColors={accentColors} isDark={isDark} />
+
+      {/* Control Panel */}
+      <ControlPanel />
+
+      {/* Main Content */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate={isLoaded ? "visible" : "hidden"}
+          className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center min-h-screen"
         >
-          {/* Greeting */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.8 }}
-            className="mb-6"
-          >
-            <motion.div
-              animate={{
-                color: isHovered ? "#EC4899" : "#8B5CF6",
-              }}
-              transition={{ duration: 0.3 }}
-              className="inline-block text-xl md:text-2xl font-mono mb-4"
-              onMouseEnter={() => setIsHovered(true)}
-              onMouseLeave={() => setIsHovered(false)}
-            >
-              &lt; Hello World /&gt;
+          {/* Left Column - Content */}
+          <div className="space-y-8">
+            {/* Terminal greeting */}
+            <motion.div variants={itemVariants}>
+              <div
+                className="flex items-center gap-2 font-mono text-sm"
+                style={{ color: accentColors.primary }}
+              >
+                <Terminal size={16} />
+                <span>$ whoami</span>
+              </div>
             </motion.div>
-          </motion.div>
 
-          {/* Name and title */}
-          <motion.h1
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4, duration: 0.8 }}
-            className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 text-white font-display"
-          >
-            I'm{" "}
-            <span
-              className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500"
-              style={{
-                backgroundPosition: `${50 + mousePosition.x * 20}% ${
-                  50 + mousePosition.y * 20
-                }%`,
-              }}
+            {/* Main title */}
+            <motion.div variants={titleVariants} className="space-y-4">
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
+                <span className="block" style={{ color: accentColors.primary }}>
+                  Ilias Ahmed
+                </span>
+              </h1>
+
+              {/* Dynamic role */}
+              <div className="h-12 flex items-center">
+                <AnimatePresence mode="wait">
+                  <motion.h2
+                    key={currentRole}
+                    initial={{ opacity: 0, y: 20, rotateX: 90 }}
+                    animate={{ opacity: 1, y: 0, rotateX: 0 }}
+                    exit={{ opacity: 0, y: -20, rotateX: -90 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className="text-xl md:text-2xl lg:text-3xl font-medium opacity-70"
+                  >
+                    {ROTATING_ROLES[currentRole]}
+                  </motion.h2>
+                </AnimatePresence>
+              </div>
+            </motion.div>
+
+            {/* Description */}
+            <motion.p
+              variants={itemVariants}
+              className="text-lg md:text-xl opacity-80 max-w-2xl leading-relaxed"
             >
-              Ilias Ahmed
-            </span>
-          </motion.h1>
+              Crafting exceptional digital experiences with modern technologies.
+              I transform ideas into powerful, scalable solutions that make a
+              real impact.
+            </motion.p>
 
-          {/* Divider */}
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: "8rem" }}
-            transition={{ delay: 0.6, duration: 0.8 }}
-            className="h-1 bg-gradient-to-r from-purple-500 to-pink-500 mx-auto mb-6"
-          />
-
-          {/* Profession */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.8 }}
-            className="text-xl md:text-2xl text-gray-300 mb-8"
-          >
-            Web Developer & Creative Coder
-          </motion.p>
-
-          {/* CTA Buttons */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1, duration: 0.8 }}
-            className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4 mt-8"
-          >
-            {/* Explore button */}
-            <motion.button
-              whileHover={{ scale: 1.05, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg
-                        shadow-lg transition-all duration-300 relative overflow-hidden"
-              onClick={() => {
-                handleExploreClick()
-                triggerHapticFeedback()
-              }
-              }
+            {/* Action buttons */}
+            <motion.div
+              variants={itemVariants}
+              className="flex flex-wrap gap-4"
             >
-              <span className="relative z-10 flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"
+              <motion.button
+                className="group px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 font-medium text-white"
+                style={{
+                  backgroundColor: accentColors.primary,
+                  boxShadow: `0 4px 14px ${accentColors.glow}`,
+                }}
+                onClick={handleViewWork}
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className="flex items-center gap-2">
+                  <Code2 size={18} />
+                  View My Work
+                  <Zap
+                    size={16}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity"
                   />
-                </svg>
-                <span>Explore My Work</span>
-              </span>
-            </motion.button>
+                </span>
+              </motion.button>
 
-            {/* Contact button */}
-            <motion.button
-              whileHover={{
-                scale: 1.05,
-                y: -2,
-                backgroundColor: "rgba(139, 92, 246, 0.1)",
-              }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full sm:w-auto px-8 py-3 bg-transparent text-purple-400 font-medium rounded-lg
-                        border border-purple-500/30 transition-all duration-300"
-              onClick={() => {
-                handleContactClick()
-                triggerHapticFeedback()
-              }
-              }
-            >
-              <span className="flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 mr-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
+              <motion.button
+                className="group px-6 py-3 rounded-lg transition-all duration-300 font-medium border-2"
+                style={{
+                  borderColor: accentColors.border,
+                  backgroundColor: `${accentColors.primary}10`,
+                }}
+                onClick={handleGetInTouch}
+                whileHover={{
+                  scale: 1.02,
+                  y: -2,
+                  backgroundColor: `${accentColors.primary}20`,
+                }}
+                whileTap={{ scale: 0.98 }}
+              >
+                Get In Touch
+              </motion.button>
+            </motion.div>
+
+            {/* Social links */}
+            <motion.div variants={itemVariants} className="flex gap-4">
+              {socialLinks.map((social) => (
+                <motion.button
+                  key={social.label}
+                  onClick={handleSocialClick(social)}
+                  className="group p-3 rounded-lg border-2 transition-all duration-300 backdrop-blur-sm relative"
+                  style={{
+                    borderColor: isDark
+                      ? "rgba(255, 255, 255, 0.1)"
+                      : "rgba(0, 0, 0, 0.1)",
+                    backgroundColor: isDark
+                      ? "rgba(255, 255, 255, 0.05)"
+                      : "rgba(0, 0, 0, 0.05)",
+                  }}
+                  whileHover={{
+                    scale: 1.1,
+                    y: -2,
+                    borderColor: accentColors.primary,
+                    backgroundColor: `${accentColors.primary}10`,
+                  }}
+                  whileTap={{ scale: 0.95 }}
+                  title={social.description}
+                  aria-label={social.description}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  <social.icon
+                    size={20}
+                    className="transition-colors duration-300 group-hover:text-current"
                   />
-                </svg>
-                <span>Let's Connect</span>
-              </span>
-            </motion.button>
-          </motion.div>
+                  {social.href && (
+                    <ExternalLink
+                      size={12}
+                      className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      style={{ color: accentColors.primary }}
+                    />
+                  )}
+                </motion.button>
+              ))}
+            </motion.div>
+          </div>
+
+          {/* Right Column - Visual (Desktop only) */}
+          {!isMobile && (
+            <motion.div
+              variants={itemVariants}
+              className="relative flex items-center justify-center"
+              style={{ x, y }}
+            >
+              <motion.div
+                className="relative w-full max-w-lg"
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.3 }}
+              >
+                <img
+                  src="https://cdn.pixabay.com/photo/2019/10/09/07/28/development-4536630_1280.png"
+                  alt="Development Illustration"
+                  className="w-full h-auto object-contain opacity-90"
+                  style={{
+                    filter: `drop-shadow(0 0 40px ${accentColors.glow})`,
+                  }}
+                  loading="lazy"
+                />
+
+                {/* Floating elements around the image */}
+                {floatingIcons.map((Icon, index) => (
+                  <FloatingIcon
+                    key={index}
+                    Icon={Icon}
+                    index={index}
+                    accentColors={accentColors}
+                  />
+                ))}
+              </motion.div>
+            </motion.div>
+          )}
         </motion.div>
 
         {/* Scroll indicator */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5, duration: 0.8 }}
-          className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center"
+          variants={itemVariants}
+          className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex flex-col items-center gap-2"
         >
-          <span className="text-xs text-purple-400 uppercase tracking-widest mb-2">
-            Scroll Down
-          </span>
-          <motion.div
-            animate={{
-              y: [0, 8, 0],
+          <span className="text-sm opacity-70">Scroll to explore</span>
+          <motion.button
+            onClick={handleScrollDown}
+            className="p-2 rounded-full border-2 transition-all duration-300"
+            style={{
+              borderColor: accentColors.border,
+              backgroundColor: `${accentColors.primary}10`,
             }}
-            transition={{ duration: 1.5, repeat: Infinity, repeatType: "loop" }}
-            className="w-6 h-10 border-2 border-purple-500/50 rounded-full flex justify-center p-1"
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            whileHover={{
+              scale: 1.1,
+              borderColor: accentColors.primary,
+              backgroundColor: `${accentColors.primary}20`,
+            }}
+            aria-label="Scroll to next section"
           >
-            <motion.div
-              animate={{ y: [0, 15, 0] }}
-              transition={{
-                duration: 1.5,
-                repeat: Infinity,
-                repeatType: "loop",
-              }}
-              className="w-1.5 h-1.5 bg-purple-500 rounded-full"
+            <ChevronDown
+              size={20}
+              className="transition-colors"
+              style={{ color: accentColors.primary }}
             />
-          </motion.div>
+          </motion.button>
         </motion.div>
       </div>
-    </div>
+    </section>
   );
 };
 

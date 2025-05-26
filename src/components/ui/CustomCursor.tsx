@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { throttle } from "lodash";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const CustomCursor = () => {
   const cursorRef = useRef<HTMLDivElement>(null);
@@ -15,6 +16,77 @@ const CustomCursor = () => {
   const clickPosition = useRef({ x: 0, y: 0 });
   const isMouseDown = useRef(false);
   const hoverElementRef = useRef<HTMLElement | null>(null);
+  const { accent, isDark } = useTheme();
+
+  // Get computed theme colors for cursor
+  const getComputedThemeColors = () => {
+    if (typeof window === "undefined") return null;
+
+    const root = document.documentElement;
+    const computedStyle = getComputedStyle(root);
+
+    // Get the HSL values and convert to usable format
+    const primaryHSL = computedStyle.getPropertyValue("--primary").trim();
+
+    // Convert HSL to RGB for cursor usage
+    const hslToRgb = (h: number, s: number, l: number) => {
+      s /= 100;
+      l /= 100;
+      const c = (1 - Math.abs(2 * l - 1)) * s;
+      const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+      const m = l - c / 2;
+      let r = 0,
+        g = 0,
+        b = 0;
+
+      if (0 <= h && h < 60) {
+        r = c;
+        g = x;
+        b = 0;
+      } else if (60 <= h && h < 120) {
+        r = x;
+        g = c;
+        b = 0;
+      } else if (120 <= h && h < 180) {
+        r = 0;
+        g = c;
+        b = x;
+      } else if (180 <= h && h < 240) {
+        r = 0;
+        g = x;
+        b = c;
+      } else if (240 <= h && h < 300) {
+        r = x;
+        g = 0;
+        b = c;
+      } else if (300 <= h && h < 360) {
+        r = c;
+        g = 0;
+        b = x;
+      }
+
+      r = Math.round((r + m) * 255);
+      g = Math.round((g + m) * 255);
+      b = Math.round((b + m) * 255);
+
+      return { r, g, b };
+    };
+
+    // Parse HSL values
+    const hslValues = primaryHSL
+      .split(" ")
+      .map((v) => parseFloat(v.replace("%", "")));
+    const [h, s, l] = hslValues;
+    const { r, g, b } = hslToRgb(h, s, l);
+
+    return {
+      primary: `${r}, ${g}, ${b}`,
+      secondary: `${Math.min(255, r + 20)}, ${Math.min(
+        255,
+        g + 20
+      )}, ${Math.min(255, b + 20)}`,
+    };
+  };
 
   // Cursor size based on state
   const getCursorSize = useCallback(() => {
@@ -27,6 +99,47 @@ const CustomCursor = () => {
         return 16;
     }
   }, [cursorState]);
+
+  // Get accent-based colors
+  const getAccentColors = useCallback(() => {
+    const themeColors = getComputedThemeColors();
+    if (!themeColors) {
+      // Fallback colors
+      const baseColors = {
+        purple: { primary: "156, 81, 255", secondary: "139, 92, 246" },
+        blue: { primary: "59, 130, 246", secondary: "96, 165, 250" },
+        pink: { primary: "236, 72, 153", secondary: "244, 114, 182" },
+        green: { primary: "34, 197, 94", secondary: "74, 222, 128" },
+        orange: { primary: "249, 115, 22", secondary: "251, 146, 60" },
+      };
+      const colors = baseColors[accent];
+      const opacity = isDark ? 0.8 : 0.6;
+
+      return {
+        default: `rgba(${colors.primary}, ${opacity * 0.3})`,
+        hover: `rgba(${colors.primary}, ${opacity * 0.2})`,
+        hoverBorder: `rgba(${colors.primary}, ${opacity})`,
+        click: `rgba(${colors.primary}, ${opacity})`,
+        trail: `rgba(${colors.secondary}, ${opacity * 0.5})`,
+        clickEffect: `rgba(${colors.primary}, ${opacity * 0.2})`,
+        clickEffectBorder: `rgba(${colors.primary}, ${opacity})`,
+        shadow: `rgba(${colors.primary}, ${opacity * 0.4})`,
+      };
+    }
+
+    const opacity = isDark ? 0.8 : 0.6;
+
+    return {
+      default: `rgba(${themeColors.primary}, ${opacity * 0.3})`,
+      hover: `rgba(${themeColors.primary}, ${opacity * 0.2})`,
+      hoverBorder: `rgba(${themeColors.primary}, ${opacity})`,
+      click: `rgba(${themeColors.primary}, ${opacity})`,
+      trail: `rgba(${themeColors.secondary}, ${opacity * 0.5})`,
+      clickEffect: `rgba(${themeColors.primary}, ${opacity * 0.2})`,
+      clickEffectBorder: `rgba(${themeColors.primary}, ${opacity})`,
+      shadow: `rgba(${themeColors.primary}, ${opacity * 0.4})`,
+    };
+  }, [accent, isDark]);
 
   useEffect(() => {
     if (typeof window === "undefined" || window.innerWidth < 768) return;
@@ -125,7 +238,6 @@ const CustomCursor = () => {
     window.addEventListener("mouseleave", handleMouseLeave);
     document.addEventListener("mouseover", throttledHoverDetect);
 
-
     animationFrameId = requestAnimationFrame(updateCursorPosition);
 
     return () => {
@@ -139,11 +251,12 @@ const CustomCursor = () => {
       cancelAnimationFrame(animationFrameId);
       throttledMouseMove.cancel();
       throttledHoverDetect.cancel();
-
     };
-  }, [cursorState, getCursorSize]);
+  }, [cursorState, getCursorSize, accent, isDark]);
 
   if (typeof window !== "undefined" && window.innerWidth < 768) return null;
+
+  const colors = getAccentColors();
 
   return (
     <>
@@ -156,22 +269,26 @@ const CustomCursor = () => {
           opacity: isVisible ? 1 : 0,
           backgroundColor:
             cursorState === "click"
-              ? "rgba(156, 81, 255, 0.8)"
-              : "rgba(156, 81, 255, 0.3)",
+              ? colors.click
+              : cursorState === "hover"
+              ? colors.hover
+              : colors.default,
           borderRadius: "50%",
           border:
             cursorState === "hover"
-              ? "2px solid rgba(156, 81, 255, 0.8)"
+              ? `2px solid ${colors.hoverBorder}`
               : "none",
-          mixBlendMode: "difference",
+          mixBlendMode: isDark ? "screen" : "multiply",
           boxShadow:
-            cursorState === "default"
-              ? "0 0 15px rgba(156, 81, 255, 0.4)"
-              : "none",
+            cursorState === "default" ? `0 0 15px ${colors.shadow}` : "none",
         }}
       >
         {hoverText && cursorState === "hover" && (
-          <div className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">
+          <div
+            className={`absolute inset-0 flex items-center justify-center text-xs font-bold ${
+              isDark ? "text-white" : "text-black"
+            }`}
+          >
             {hoverText}
           </div>
         )}
@@ -183,10 +300,10 @@ const CustomCursor = () => {
         style={{
           width: "8px",
           height: "8px",
-          backgroundColor: "rgba(156, 81, 255, 0.5)",
+          backgroundColor: colors.trail,
           opacity: isVisible && cursorState === "default" ? 0.7 : 0,
           transition: "opacity 0.3s ease",
-          boxShadow: "0 0 10px rgba(156, 81, 255, 0.3)",
+          boxShadow: `0 0 10px ${colors.shadow}`,
         }}
       />
 
@@ -197,8 +314,8 @@ const CustomCursor = () => {
             style={{
               left: clickPosition.current.x - 20,
               top: clickPosition.current.y - 20,
-              backgroundColor: "rgba(156, 81, 255, 0.2)",
-              border: "2px solid rgba(156, 81, 255, 0.8)",
+              backgroundColor: colors.clickEffect,
+              border: `2px solid ${colors.clickEffectBorder}`,
             }}
             initial={{ width: 0, height: 0, opacity: 1 }}
             animate={{ width: 80, height: 80, opacity: 0 }}

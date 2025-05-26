@@ -1,8 +1,9 @@
-import { memo, useState } from "react";
 import { motion } from "framer-motion";
+import { Search, Grid3X3, BarChart3, GitCompare, X } from "lucide-react";
 import { ViewMode } from "./types";
-import { categories } from "./skillsData";
+import { skills } from "./skillsData";
 import { triggerHapticFeedback } from "@/utils/haptics";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface SkillsFiltersProps {
   viewMode: ViewMode;
@@ -13,17 +14,6 @@ interface SkillsFiltersProps {
   setSearchQuery: (query: string) => void;
   setComparisonSkills: (skills: string[]) => void;
 }
-
-/**
- * Popular skill combinations for quick comparison
- */
-const POPULAR_COMBINATIONS = [
-  { name: "Frontend Trio", skills: ["react", "typescript", "tailwind"] },
-  { name: "Backend Stack", skills: ["nodejs", "mongodb", "graphql"] },
-  { name: "Full Stack", skills: ["react", "nodejs", "mongodb"] },
-  { name: "DevOps Tools", skills: ["docker", "git", "nodejs"] },
-  { name: "Frontend Graphics", skills: ["threejs", "webgl", "react"] },
-];
 
 /**
  * SkillsFilters component provides filtering and view mode controls
@@ -37,272 +27,234 @@ const SkillsFilters = ({
   setSearchQuery,
   setComparisonSkills,
 }: SkillsFiltersProps) => {
-  const [showQuickSelect, setShowQuickSelect] = useState(false);
+  const { isDark, getAccentColors } = useTheme();
+  const accentColors = getAccentColors();
 
-  // Handle switching to comparison view with initial skills
-  const handleComparisonView = () => {
-    setViewMode("comparison");
-    // Initialize with popular frontend skills
-    setComparisonSkills(["react", "typescript"]);
-    setShowQuickSelect(true);
-    triggerHapticFeedback();
-  };
+  // Get unique categories from skills
+  const categories = [
+    "All",
+    ...Array.from(new Set(skills.map((skill) => skill.category))),
+  ];
 
-  // Handle quick selection of skill combinations
-  const handleQuickSelect = (skills: string[]) => {
-    setComparisonSkills(skills);
-    setShowQuickSelect(false);
-    triggerHapticFeedback();
-  };
+  const viewModes = [
+    { id: "grid", label: "Grid View", icon: Grid3X3 },
+    { id: "mastery", label: "Mastery", icon: BarChart3 },
+    { id: "comparison", label: "Compare", icon: GitCompare },
+  ] as const;
 
-  // Handle view mode change
   const handleViewModeChange = (mode: ViewMode) => {
     setViewMode(mode);
-    triggerHapticFeedback();
-
-    // Reset comparison skills when switching away from comparison view
-    if (mode !== "comparison" && viewMode === "comparison") {
+    if (mode !== "comparison") {
       setComparisonSkills([]);
     }
+    triggerHapticFeedback();
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    triggerHapticFeedback();
   };
 
   return (
-    <div className="mb-10 space-y-6">
-      {/* View Mode Selector */}
-      <div className="flex flex-wrap justify-center gap-4">
-        {/* Grid View Button */}
-        <ViewModeButton
-          isActive={viewMode === "grid"}
-          onClick={() => handleViewModeChange("grid")}
-          icon={
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2               H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
-            </svg>
-          }
-          label="Grid View"
-        />
-
-        {/* Mastery View Button */}
-        <ViewModeButton
-          isActive={viewMode === "mastery"}
-          onClick={() => handleViewModeChange("mastery")}
-          icon={
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
-            </svg>
-          }
-          label="Mastery Levels"
-        />
-
-        {/* Comparison View Button */}
-        <ViewModeButton
-          isActive={viewMode === "comparison"}
-          onClick={handleComparisonView}
-          icon={
-            <svg
-              className="w-5 h-5 mr-2"
-              fill="currentColor"
-              viewBox="0 0 20 20"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z"></path>
-            </svg>
-          }
-          label="Compare Skills"
-        />
-      </div>
-
-      {/* Quick Selection Modal for Comparison */}
-      {showQuickSelect && viewMode === "comparison" && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-lg border border-gray-200 dark:border-gray-700"
-        >
-          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-            Quick Compare - Popular Combinations
-          </h4>
-          <div className="flex flex-wrap gap-2">
-            {POPULAR_COMBINATIONS.map((combo, index) => (
-              <button
-                key={index}
-                onClick={() => handleQuickSelect(combo.skills)}
-                className="px-3 py-1.5 text-xs rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-800/40 transition-colors"
-              >
-                {combo.name}
-              </button>
-            ))}
-            <button
-              onClick={() => setShowQuickSelect(false)}
-              className="px-3 py-1.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-            >
-              Close
-            </button>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Search and Category Filters */}
-      <div className="flex flex-col sm:flex-row justify-center gap-4">
-        {/* Search Input */}
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <svg
-              className="w-5 h-5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              ></path>
-            </svg>
-          </div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.2 }}
+      className="mb-12"
+    >
+      <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
+        {/* Search Bar */}
+        <div className="relative flex-1 max-w-md">
+          <Search
+            size={20}
+            className="absolute left-3 top-1/2 transform -translate-y-1/2"
+            style={{
+              color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)",
+            }}
+          />
           <input
             type="text"
-            className="pl-10 pr-4 py-2 w-full sm:w-64 rounded-2xl bg-gray-100 dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-900 p-6 h-full border border-gray-300 dark:border-gray-700 hover:border-purple-500 transition-all duration-300 text-black dark:text-white"
             placeholder="Search skills..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            aria-label="Search skills"
+            className="w-full pl-10 pr-10 py-3 rounded-lg border transition-all duration-200 focus:outline-none focus:ring-2"
+            style={{
+              backgroundColor: isDark
+                ? "rgba(255,255,255,0.05)"
+                : "rgba(255,255,255,0.8)",
+              borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+              color: isDark ? "#ffffff" : "#1f2937",
+            }}
           />
+          {searchQuery && (
+            <button
+              onClick={clearSearch}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 hover:opacity-70 transition-opacity"
+              style={{
+                color: isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.4)",
+              }}
+            >
+              <X size={16} />
+            </button>
+          )}
         </div>
 
-        {/* Category Filters */}
-        <div className="flex flex-wrap justify-center gap-2">
-          <CategoryButton
-            isActive={selectedCategory === "All"}
-            onClick={() => setSelectedCategory("All")}
-            label="All"
-          />
-
+        {/* Category Filter */}
+        <div className="flex flex-wrap gap-2">
           {categories.map((category) => (
-            <CategoryButton
+            <motion.button
               key={category}
-              isActive={selectedCategory === category}
-              onClick={() => setSelectedCategory(category)}
-              label={category}
-            />
+              onClick={() => {
+                setSelectedCategory(category);
+                triggerHapticFeedback();
+              }}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+              style={{
+                backgroundColor:
+                  selectedCategory === category
+                    ? accentColors.primary
+                    : isDark
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(255,255,255,0.8)",
+                color:
+                  selectedCategory === category
+                    ? "white"
+                    : isDark
+                    ? "rgba(255,255,255,0.7)"
+                    : "rgba(0,0,0,0.7)",
+                border: `1px solid ${
+                  selectedCategory === category
+                    ? accentColors.primary
+                    : isDark
+                    ? "rgba(255,255,255,0.1)"
+                    : "rgba(0,0,0,0.1)"
+                }`,
+              }}
+              whileHover={{
+                scale: 1.05,
+                backgroundColor:
+                  selectedCategory === category
+                    ? accentColors.secondary
+                    : `${accentColors.primary}20`,
+              }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {category}
+            </motion.button>
           ))}
+        </div>
+
+        {/* View Mode Toggle */}
+        <div
+          className="flex rounded-lg p-1 border"
+          style={{
+            backgroundColor: isDark
+              ? "rgba(255,255,255,0.05)"
+              : "rgba(255,255,255,0.8)",
+            borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+          }}
+        >
+          {viewModes.map((mode) => {
+            const Icon = mode.icon;
+            const isActive = viewMode === mode.id;
+
+            return (
+              <motion.button
+                key={mode.id}
+                onClick={() => handleViewModeChange(mode.id)}
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 relative"
+                style={{
+                  backgroundColor: isActive
+                    ? accentColors.primary
+                    : "transparent",
+                  color: isActive
+                    ? "white"
+                    : isDark
+                    ? "rgba(255,255,255,0.7)"
+                    : "rgba(0,0,0,0.7)",
+                }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Icon size={16} />
+                <span className="hidden sm:inline">{mode.label}</span>
+
+                {isActive && (
+                  <motion.div
+                    layoutId="activeViewIndicator"
+                    className="absolute inset-0 rounded-md"
+                    style={{ backgroundColor: accentColors.primary }}
+                    initial={false}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  />
+                )}
+              </motion.button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Comparison Mode Helper */}
-      {viewMode === "comparison" && (
+      {/* Active Filters Display */}
+      {(selectedCategory !== "All" || searchQuery) && (
         <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center text-sm text-gray-600 dark:text-gray-400 bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg"
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: "auto" }}
+          className="mt-4 flex flex-wrap gap-2 items-center"
         >
-          <p>
-            <span className="font-medium text-purple-700 dark:text-purple-300">
-              Tip:
-            </span>{" "}
-            Select up to 3 skills to compare their proficiency levels, projects,
-            and experience.
-            <button
-              onClick={() => {
-                setShowQuickSelect(!showQuickSelect);
-                triggerHapticFeedback();
+          <span
+            className="text-sm font-medium"
+            style={{
+              color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)",
+            }}
+          >
+            Active filters:
+          </span>
+
+          {selectedCategory !== "All" && (
+            <span
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm"
+              style={{
+                backgroundColor: `${accentColors.primary}20`,
+                color: accentColors.primary,
+                border: `1px solid ${accentColors.primary}30`,
               }}
-              className="ml-2 underline text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300"
             >
-              Quick select popular combinations
-            </button>
-          </p>
+              Category: {selectedCategory}
+              <button
+                onClick={() => {
+                  setSelectedCategory("All");
+                  triggerHapticFeedback();
+                }}
+                className="hover:opacity-70 transition-opacity"
+              >
+                <X size={14} />
+              </button>
+            </span>
+          )}
+
+          {searchQuery && (
+            <span
+              className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm"
+              style={{
+                backgroundColor: `${accentColors.primary}20`,
+                color: accentColors.primary,
+                border: `1px solid ${accentColors.primary}30`,
+              }}
+            >
+              Search: "{searchQuery}"
+              <button
+                onClick={clearSearch}
+                className="hover:opacity-70 transition-opacity"
+              >
+                <X size={14} />
+              </button>
+            </span>
+          )}
         </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 };
 
-// Helper component for view mode buttons
-const ViewModeButton = ({
-  isActive,
-  onClick,
-  icon,
-  label,
-}: {
-  isActive: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-}) => (
-  <motion.button
-    className={`px-5 py-2.5 rounded-full relative overflow-hidden ${
-      isActive
-        ? "text-white dark:text-white"
-        : "text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-    }`}
-    onClick={onClick}
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-  >
-    <span className="relative z-10 flex items-center">
-      {icon}
-      {label}
-    </span>
-    {isActive && (
-      <motion.span
-        className="absolute inset-0 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full"
-        layoutId="viewModeHighlight"
-        initial={false}
-        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-        style={{ zIndex: 0 }}
-      />
-    )}
-  </motion.button>
-);
-
-// Helper component for category buttons
-const CategoryButton = ({
-  isActive,
-  onClick,
-  label,
-}: {
-  isActive: boolean;
-  onClick: () => void;
-  label: string;
-}) => (
-  <motion.button
-    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all relative overflow-hidden ${
-      isActive
-        ? "text-white dark:text-white"
-        : "text-gray-700 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-    }`}
-    onClick={() => {
-      onClick();
-      triggerHapticFeedback();
-    }}
-    whileHover={{ scale: 1.05 }}
-    whileTap={{ scale: 0.95 }}
-  >
-    <span className="relative z-10">{label}</span>
-    {isActive && (
-      <motion.span
-        className="absolute inset-0 bg-purple-700 rounded-lg"
-        layoutId="categoryHighlight"
-        initial={false}
-        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-      />
-    )}
-  </motion.button>
-);
-
-export default memo(SkillsFilters);
+export default SkillsFilters;
 

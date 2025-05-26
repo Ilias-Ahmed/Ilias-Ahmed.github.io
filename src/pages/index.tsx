@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, Suspense, useMemo } from "react";
 import Hero from "@/pages/Hero";
 import ScrollProgressBar from "@/components/ui/ScrollProgressBar";
 import { NavigationProvider } from "@/contexts/NavigationContext";
+import { useBackground } from "@/contexts/BackgroundContext";
 import Navigation from "@/components/navigation/Navigation";
 import CustomCursor from "@/components/ui/CustomCursor";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -19,7 +20,7 @@ const ProjectsSection = React.lazy(() => import("@/components/projects"));
 const ContactSection = React.lazy(() => import("@/components/contact"));
 
 /**
- * Main Index component - Optimized for performance
+ * Main Index component - Optimized for performance with background integration
  */
 const Index = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -29,6 +30,9 @@ const Index = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const scrollingRef = useRef(false);
+
+  // Background context integration
+  const { setCurrentSection } = useBackground();
 
   // Define navigation sections
   const navSections = useMemo(
@@ -91,6 +95,9 @@ const Index = () => {
       targetSection = matchingSection ? matchingSection.id : "home";
     }
 
+    // Update background context
+    setCurrentSection(targetSection);
+
     const element = document.getElementById(targetSection);
     if (element) {
       // Set flag to prevent scroll handler from firing during programmatic scroll
@@ -102,7 +109,7 @@ const Index = () => {
         scrollingRef.current = false;
       }, 1000);
     }
-  }, [location.pathname, navSections]);
+  }, [location.pathname, navSections, setCurrentSection]);
 
   // Track scroll progress and update URL
   useEffect(() => {
@@ -110,7 +117,6 @@ const Index = () => {
 
     const handleScroll = () => {
       if (typeof window === "undefined" || scrollingRef.current) return;
-
       // Calculate scroll progress
       const windowHeight = window.innerHeight;
       const documentHeight = document.documentElement.scrollHeight;
@@ -135,6 +141,9 @@ const Index = () => {
 
           // If viewport middle is within this section
           if (viewportMid >= sectionTop && viewportMid <= sectionBottom) {
+            // Update background context
+            setCurrentSection(section.id);
+
             // Only update URL if it's different from current path
             const targetPath = section.id === "home" ? "/" : `/${section.id}`;
             if (location.pathname !== targetPath) {
@@ -151,7 +160,7 @@ const Index = () => {
       window.removeEventListener("scroll", handleScroll);
       clearTimeout(scrollTimeout);
     };
-  }, [navSections, navigate, location.pathname]);
+  }, [navSections, navigate, location.pathname, setCurrentSection]);
 
   // Simulate loading
   useEffect(() => {
@@ -180,6 +189,7 @@ const Index = () => {
               id="home"
               data-section-name="Home"
               data-keywords="start,landing,main"
+              className="relative"
             >
               <Hero />
             </section>
@@ -195,6 +205,7 @@ const Index = () => {
                 id="about"
                 data-section-name="About"
                 data-keywords="me,bio,profile"
+                className="relative"
               >
                 <AboutSection />
               </section>
@@ -203,6 +214,7 @@ const Index = () => {
                 id="skills"
                 data-section-name="Skills"
                 data-keywords="abilities,expertise,tech stack"
+                className="relative"
               >
                 <SkillsSection />
               </section>
@@ -211,6 +223,7 @@ const Index = () => {
                 id="projects"
                 data-section-name="Projects"
                 data-keywords="work,portfolio,showcase"
+                className="relative"
               >
                 <ProjectsSection />
               </section>
@@ -219,6 +232,7 @@ const Index = () => {
                 id="contact"
                 data-section-name="Contact"
                 data-keywords="message,get in touch,email"
+                className="relative"
               >
                 <ContactSection />
               </section>
@@ -229,7 +243,6 @@ const Index = () => {
           <Navigation
             enableDots={!isMobile}
             enableVoice={!isMobile}
-            enableGestures={true}
             enableCommandPalette={true}
             enableBackToTop={true}
           />
@@ -248,3 +261,4 @@ const Index = () => {
 };
 
 export default React.memo(Index);
+

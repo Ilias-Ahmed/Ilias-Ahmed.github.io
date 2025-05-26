@@ -1,131 +1,181 @@
-import Lenis from "@studio-freight/lenis";
+import Lenis from "lenis";
 
 /**
- * Scroll to a specific element with smooth animation
- * with mobile device handling
+ * Enhanced scroll utility with improved error handling and mobile optimization
  */
-export const scrollToElement = (
-  lenis: Lenis | null,
+
+export interface ScrollOptions {
+  offset?: number;
+  duration?: number;
+  immediate?: boolean;
+  easing?: (t: number) => number;
+}
+
+/**
+ * Detects if the user is on a mobile device
+ */
+export const isMobileDevice = (): boolean => {
+  if (typeof window === "undefined") return false;
+
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent
+  ) || window.innerWidth < 768;
+};
+
+/**
+ * Scroll to a specific element with enhanced error handling
+ */
+export const scrollToElement = async (
   element: HTMLElement | null,
-  options?: { offset?: number; duration?: number }
-) => {
+  options: ScrollOptions = {}
+): Promise<void> => {
   if (!element) {
     console.warn("Element not found for scrolling");
-    return;
+    return Promise.resolve();
   }
 
-  // Check if we're on a mobile device
-  const isMobile =
-    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    );
+  const {
+    offset = -100,
+    duration = isMobileDevice() ? 0.8 : 1.2,
+    immediate = false,
+    easing = (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
+  } = options;
 
-  // If lenis is not available or failed, use native scroll as fallback
-  if (!lenis) {
+  // Get Lenis instance from window if available
+  interface LenisWindow extends Window {
+    __lenis?: Lenis;
+  }
+  const lenis = (window as LenisWindow).__lenis;
+
+  if (lenis && !immediate) {
     try {
-      element.scrollIntoView({ behavior: "smooth" });
+      return new Promise<void>((resolve) => {
+        lenis.scrollTo(element, {
+          offset,
+          duration,
+          easing,
+          onComplete: () => resolve(),
+        });
+      });
     } catch (error) {
-      console.error("Native scroll failed:", error);
-      // Ultimate fallback - instant scroll
-      window.scrollTo(0, element.offsetTop - (options?.offset || 0));
+      console.error("Lenis scroll failed:", error);
+      // Fallback to native scroll
     }
-    return;
   }
 
-  // Ensure the element is interactive after scrolling
-  setTimeout(() => {
-    if (element) {
-      element.style.pointerEvents = "auto";
-    }
-  }, (options?.duration || 1.2) * 1000 + 100);
-
-  // Use shorter duration on mobile for better responsiveness
-  const duration = isMobile
-    ? options?.duration
-      ? options.duration * 0.8
-      : 0.8
-    : options?.duration ?? 1.2;
-
+  // Native scroll fallback
   try {
-    lenis.scrollTo(element, {
-      offset: options?.offset ?? -100,
-      duration: duration,
-      immediate: false,
-    });
-  } catch (error) {
-    console.error("Lenis scroll failed:", error);
-    // Fallback to native scroll
-    try {
-      element.scrollIntoView({ behavior: "smooth" });
-    } catch (secondError) {
-      console.error("Native scroll failed as fallback:", secondError);
-      // Ultimate fallback - instant scroll
-      window.scrollTo(0, element.offsetTop - (options?.offset || 0));
+    const elementTop = element.getBoundingClientRect().top + window.scrollY;
+    const targetPosition = elementTop + offset;
+
+    if (immediate || !("scrollBehavior" in document.documentElement.style)) {
+      window.scrollTo(0, targetPosition);
+      return Promise.resolve();
     }
+
+    window.scrollTo({
+      top: targetPosition,
+      behavior: "smooth"
+    });
+
+    return Promise.resolve();
+  } catch (error) {
+    console.error("Native scroll failed:", error);
+    return Promise.resolve();
   }
 };
 
 /**
- * Scroll to a specific section by ID
- * with improved mobile handling
+ * Scroll to a section by ID with improved error handling
  */
-export const scrollToSection = (
-  lenis: Lenis | null,
+export const scrollToSection = async (
   sectionId: string,
-  options?: { offset?: number; duration?: number }
-) => {
+  options: ScrollOptions = {}
+): Promise<void> => {
   if (!sectionId) {
     console.warn("No section ID provided for scrolling");
-    return;
+    return Promise.resolve();
   }
 
   const section = document.getElementById(sectionId);
   if (!section) {
     console.warn(`Section with ID "${sectionId}" not found`);
-    return;
+    return Promise.resolve();
   }
 
-  // Check if we're on a mobile device
-  const isMobile =
-    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-      navigator.userAgent
-    );
-
-  // If we're on mobile, ensure touch events work after scrolling
-  if (isMobile) {
-    section.style.pointerEvents = "auto";
-
-    // Set all other sections to have pointer events as well
-    document.querySelectorAll("section, [id]").forEach((el) => {
-      (el as HTMLElement).style.pointerEvents = "auto";
-    });
-  }
-
-  scrollToElement(lenis, section, options);
+  return scrollToElement(section, options);
 };
 
 /**
- * Create a navigation index for the page
- * by finding all sections with IDs
+ * Get the currently visible section based on scroll position
  */
-export const createNavigationIndex = () => {
-  const sections = Array.from(document.querySelectorAll("[id]"))
-    .filter((el) => {
-      // Only include elements that are actual sections or have specific classes
-      return (
-        el.tagName.toLowerCase() === "section" ||
-        el.classList.contains("section") ||
-        el.getAttribute("data-section") === "true"
-      );
-    })
-    .map((el) => ({
-      id: el.id,
-      name:
-        el.getAttribute("data-section-name") ||
-        el.id.charAt(0).toUpperCase() + el.id.slice(1),
-      href: `#${el.id}`,
-      keywords: el.getAttribute("data-keywords")?.split(",") || [],
-    }));
+export const getCurrentSection = (
+  sections: string[],
+  offset: number = 100
+): string | null => {
+  if (typeof window === "undefined" || !sections.length) return null;
 
-  return sections;
+  const scrollPosition = window.scrollY + offset;
+  const viewportHeight = window.innerHeight;
+
+  // Find section that is most visible in viewport
+  let maxVisibleArea = 0;
+  let currentSection: string | null = null;
+
+  sections.forEach((sectionId) => {
+    const element = document.getElementById(sectionId);
+    if (!element) return;
+
+    const rect = element.getBoundingClientRect();
+    const elementTop = rect.top + window.scrollY;
+    const elementBottom = elementTop + rect.height;
+
+    // Calculate visible area, considering offset
+    const visibleTop = Math.max(elementTop, scrollPosition);
+    const visibleBottom = Math.min(elementBottom, scrollPosition + viewportHeight);
+    const visibleArea = Math.max(0, visibleBottom - visibleTop);
+
+    if (visibleArea > maxVisibleArea) {
+      maxVisibleArea = visibleArea;
+      currentSection = sectionId;
+    }
+  });
+
+  return currentSection;
+};
+
+/**
+ * Initialize smooth scrolling with Lenis
+ */
+export const initSmoothScrolling = (): Lenis | null => {
+  if (typeof window === "undefined") return null;
+
+  try {
+    const lenis = new Lenis({
+      duration: isMobileDevice() ? 1.0 : 1.2,
+      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      smoothWheel: true,
+      wheelMultiplier: isMobileDevice() ? 1.0 : 0.8,
+      touchMultiplier: 1.5,
+      infinite: false,
+    });
+
+    // Store globally for access
+    interface LenisWindow extends Window {
+      __lenis?: Lenis;
+    }
+    (window as LenisWindow).__lenis = lenis;
+
+    const raf = (time: number): void => {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    };
+
+    requestAnimationFrame(raf);
+
+    return lenis;
+  } catch (error) {
+    console.error("Failed to initialize Lenis:", error);
+    return null;
+  }
 };

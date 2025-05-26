@@ -1,333 +1,414 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { ArrowRight, Download, Github, Linkedin, Twitter } from "lucide-react";
-import profileImage from "/images/profile.png?url"; // Adjust the path as necessary
-import ResumeViewer from "../ui/ResumeViewer";
-import { triggerHapticFeedback } from "@/utils/haptics";
+import { useTheme } from "@/contexts/ThemeContext";
+import {
+  Brain,
+  Heart,
+  Target,
+  Coffee,
+  Code,
+  Palette,
+  Zap,
+  Globe,
+} from "lucide-react";
+import profileImage from "/images/profile.png?url";
 
 const ProfileCard = () => {
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [activeCard, setActiveCard] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
-  const [showResume, setShowResume] = useState(false);
+
+  const { isDark, getAccentColors } = useTheme();
+  const accentColors = getAccentColors();
+
+  const personalityCards = [
+    {
+      icon: Brain,
+      title: "The Thinker",
+      description:
+        "I approach every challenge with analytical thinking and creative problem-solving.",
+      traits: ["Strategic Planning", "System Design", "Innovation"],
+      color: accentColors.primary,
+    },
+    {
+      icon: Heart,
+      title: "The Creator",
+      description:
+        "Passionate about crafting experiences that genuinely impact people's lives.",
+      traits: ["User Empathy", "Design Thinking", "Quality Focus"],
+      color: accentColors.secondary,
+    },
+    {
+      icon: Target,
+      title: "The Achiever",
+      description:
+        "Goal-oriented mindset with a track record of delivering exceptional results.",
+      traits: ["Results Driven", "Continuous Learning", "Excellence"],
+      color: accentColors.tertiary,
+    },
+  ];
+
+  const lifeMetrics = [
+    {
+      label: "Lines of Code",
+      value: "500k+",
+      icon: Code,
+      description: "Written with passion",
+    },
+    {
+      label: "Coffee Cups",
+      value: "2,847",
+      icon: Coffee,
+      description: "This year alone",
+    },
+    {
+      label: "Design Hours",
+      value: "3.2k",
+      icon: Palette,
+      description: "Perfecting interfaces",
+    },
+    {
+      label: "Countries Reached",
+      value: "25+",
+      icon: Globe,
+      description: "Through my work",
+    },
+  ];
 
   useEffect(() => {
-    // Trigger animations after component mounts
-    const timer = setTimeout(() => setIsVisible(true), 300);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { type: "spring", stiffness: 100 },
-    },
-  };
-
-  const skills = ["React", "Node.js", "TypeScript", "GraphQL", "AWS", "UI/UX"];
-
-  const quickFacts = [
-    { icon: "🌍", title: "Location", content: "India, Assam" },
-    { icon: "🎓", title: "Education", content: "BCA, Gauhati University" },
-    { icon: "🌱", title: "Learning", content: "Fullstack Developer" },
-    {
-      icon: "🎯",
-      title: "Goal",
-      content: "Building impactful products that solve real problems",
-    },
-  ];
-
-  const stats = [
-    { number: "3+", label: "Years Experience" },
-    { number: "50+", label: "Projects Completed" },
-    { number: "15+", label: "Happy Clients" },
-    { number: "10+", label: "Open Source Contributions" },
-  ];
+    setIsVisible(true);
+    const interval = setInterval(() => {
+      setActiveCard((prev) => (prev + 1) % personalityCards.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [personalityCards.length]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-12">
-      {/* Main profile section */}
-      <div className="grid lg:grid-cols-2 gap-12 items-center">
-        {/* Profile Image with Card Flip */}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={isVisible ? { opacity: 1 } : { opacity: 0 }}
+      transition={{ duration: 0.8 }}
+      className="max-w-6xl mx-auto space-y-6 md:space-y-8"
+    >
+      {/* Main Profile Section with Integrated Background */}
+      <div className="relative overflow-hidden">
+        {/* Background with Profile Image Integration */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.7 }}
-          className="relative mx-auto max-w-md w-full"
-        >
-          {/* Background decorative elements */}
-          <div className="absolute -z-10 -top-10 -left-10 w-full h-full bg-gradient-to-br from-primary/10 to-purple-500/5 rounded-full blur-lg" />
-          <div className="absolute -z-10 bottom-10 right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-md" />
+          className="absolute inset-0"
+        />
 
-          {/* Card with flip effect */}
-          <div
-            className="relative w-full h-[450px] perspective-3d cursor-pointer"
-            onClick={() => {
-              setIsFlipped(!isFlipped);
-              triggerHapticFeedback();
-            }}
-            style={{ perspective: "1000px" }}
-          >
+        <motion.div
+          className="absolute top-0 right-0 w-1/2 h-full opacity-5 md:opacity-10"
+          style={{
+            backgroundImage: `url(${profileImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+            maskImage:
+              "linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 50%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to left, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 50%, transparent 100%)",
+          }}
+          animate={{
+            scale: [1, 1.05, 1],
+            opacity: [0.05, 0.1, 0.05],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+
+        {/* Floating Geometric Elements - Scaled for mobile */}
+        <motion.div
+          className="absolute top-4 left-4 md:top-10 md:left-10 w-12 h-12 md:w-20 md:h-20 rounded-full opacity-20"
+          style={{ backgroundColor: accentColors.primary }}
+          animate={{
+            y: [0, -10, 0],
+            rotate: [0, 180, 360],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute bottom-10 right-10 md:bottom-20 md:right-20 w-10 h-10 md:w-16 md:h-16 opacity-15"
+          style={{
+            backgroundColor: accentColors.secondary,
+            clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)",
+          }}
+          animate={{
+            rotate: [0, 120, 240, 360],
+          }}
+          transition={{
+            duration: 8,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        />
+
+        {/* Content */}
+        <div className="relative z-10 p-4 md:p-8 lg:p-12">
+          <div className="grid lg:grid-cols-3 gap-6 md:gap-8 items-start">
+            {/* Left: Identity - Full width on mobile */}
             <motion.div
-              className="relative w-full h-full transition-all duration-700 rounded-2xl"
-              animate={{ rotateY: isFlipped ? 180 : 0 }}
-              transition={{ duration: 0.7, type: "spring", damping: 20 }}
-              style={{ transformStyle: "preserve-3d" }}
+              className="lg:col-span-2 space-y-4 md:space-y-6"
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, duration: 0.8 }}
             >
-              {/* Front - Profile Image */}
-              <div
-                className="absolute inset-0 rounded-2xl overflow-hidden"
-                style={{ backfaceVisibility: "hidden" }}
-              >
-                <div className="relative h-full w-full">
-                  {/* Profile image */}
-                  <img
-                    src={profileImage}
-                    alt="Ilias Ahmed"
-                    className="object-cover w-full h-full"
+              {/* Header */}
+              <div>
+                <motion.div
+                  className="inline-flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 rounded-full mb-3 md:mb-4"
+                  style={{
+                    backgroundColor: `${accentColors.primary}20`,
+                    border: `1px solid ${accentColors.primary}30`,
+                  }}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.5, type: "spring" }}
+                >
+                  <motion.div
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: accentColors.primary }}
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
                   />
+                  <span className="text-xs md:text-sm font-medium">
+                    About Me
+                  </span>
+                </motion.div>
 
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent opacity-60" />
+                <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-2 md:mb-3">
+                  <span
+                    className="bg-clip-text text-transparent"
+                    style={{
+                      backgroundImage: `linear-gradient(135deg, ${accentColors.primary} 0%, ${accentColors.secondary} 100%)`,
+                    }}
+                  >
+                    Beyond the Code
+                  </span>
+                </h3>
+                <p className="text-sm md:text-base lg:text-lg opacity-80 leading-relaxed">
+                  I'm not just a developer—I'm a digital architect who believes
+                  in the power of technology to solve real-world problems. My
+                  journey spans from crafting pixel-perfect interfaces to
+                  building robust backend systems.
+                </p>
+              </div>
 
-                  {/* Social links */}
-                  <div className="absolute bottom-0 left-0 right-0 p-6 flex justify-center gap-4">
-                    {[
-                      { icon: <Github size={18} />, url: "https://github.com" },
-                      {
-                        icon: <Linkedin size={18} />,
-                        url: "https://linkedin.com",
-                      },
-                      {
-                        icon: <Twitter size={18} />,
-                        url: "https://twitter.com",
-                      },
-                    ].map((social, index) => (
-                      <motion.a
-                        key={index}
-                        href={social.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white border border-white/20 hover:bg-primary/80 transition-colors"
-                        whileHover={{ scale: 1.1, y: -5 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        {social.icon}
-                      </motion.a>
-                    ))}
+              {/* Philosophy */}
+              <motion.div
+                className="p-4 md:p-6 rounded-xl md:rounded-2xl backdrop-blur-sm border"
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.03)"
+                    : "rgba(255,255,255,0.8)",
+                  borderColor: isDark
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(0,0,0,0.1)",
+                }}
+                whileHover={{ y: -2 }}
+              >
+                <div className="flex items-start gap-3 md:gap-4">
+                  <motion.div
+                    className="w-10 h-10 md:w-12 md:h-12 rounded-lg md:rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: `${accentColors.primary}20` }}
+                    whileHover={{ rotate: 10 }}
+                  >
+                    <Zap size={20} style={{ color: accentColors.primary }} />
+                  </motion.div>
+                  <div>
+                    <h4 className="font-semibold mb-1 md:mb-2 text-sm md:text-base">
+                      My Philosophy
+                    </h4>
+                    <p className="opacity-80 text-xs md:text-sm leading-relaxed">
+                      "Great software isn't just about clean code—it's about
+                      understanding people, solving problems elegantly, and
+                      creating experiences that feel magical."
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Right: Personality Cards - Full width on mobile, stacked */}
+            <motion.div
+              className="space-y-3 md:space-y-4"
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5, duration: 0.8 }}
+            >
+              {personalityCards.map((card, index) => (
+                <motion.div
+                  key={index}
+                  className="p-3 md:p-4 rounded-lg md:rounded-xl cursor-pointer transition-all duration-300 border"
+                  style={{
+                    backgroundColor:
+                      activeCard === index
+                        ? `${card.color}15`
+                        : isDark
+                        ? "rgba(255,255,255,0.03)"
+                        : "rgba(255,255,255,0.8)",
+                    borderColor:
+                      activeCard === index
+                        ? `${card.color}40`
+                        : isDark
+                        ? "rgba(255,255,255,0.05)"
+                        : "rgba(0,0,0,0.1)",
+                    transform:
+                      activeCard === index ? "scale(1.02)" : "scale(1)",
+                  }}
+                  onClick={() => setActiveCard(index)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+                    <motion.div
+                      className="w-8 h-8 md:w-10 md:h-10 rounded-md md:rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{
+                        backgroundColor: `${card.color}20`,
+                        color: card.color,
+                      }}
+                      animate={
+                        activeCard === index ? { scale: [1, 1.1, 1] } : {}
+                      }
+                      transition={{ duration: 0.5 }}
+                    >
+                      <card.icon size={16} className="md:w-5 md:h-5" />
+                    </motion.div>
+                    <h4
+                      className="font-semibold text-sm md:text-base"
+                      style={{
+                        color: activeCard === index ? card.color : undefined,
+                      }}
+                    >
+                      {card.title}
+                    </h4>
                   </div>
 
-                  {/* Flip indicator */}
                   <motion.div
-                    className="absolute top-4 right-4 bg-white/10 backdrop-blur-md px-3 py-1 rounded-full text-xs text-white/80 border border-white/20"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 1 }}
+                    initial={false}
+                    animate={{
+                      height: activeCard === index ? "auto" : 0,
+                      opacity: activeCard === index ? 1 : 0,
+                    }}
+                    className="overflow-hidden"
                   >
-                    Tap for quick facts
+                    <p className="text-xs md:text-sm opacity-80 mb-2 md:mb-3">
+                      {card.description}
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {card.traits.map((trait) => (
+                        <span
+                          key={trait}
+                          className="px-2 py-0.5 md:py-1 rounded text-xs font-medium"
+                          style={{
+                            backgroundColor: `${card.color}15`,
+                            color: card.color,
+                          }}
+                        >
+                          {trait}
+                        </span>
+                      ))}
+                    </div>
                   </motion.div>
-                </div>
-              </div>
-
-              {/* Back - Quick Facts */}
-              <div
-                className="absolute inset-0 rounded-2xl overflow-hidden"
-                style={{
-                  backfaceVisibility: "hidden",
-                  transform: "rotateY(180deg)",
-                }}
-              >
-                <div className="h-full w-full bg-gradient-to-br from-gray-900/95 to-gray-800/95 backdrop-blur-md border border-white/10 shadow-xl p-8 flex flex-col">
-                  <h4 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-                    <span className="w-2 h-2 bg-primary rounded-full"></span>
-                    <span>Quick Facts</span>
-                  </h4>
-
-                  <motion.ul
-                    className="space-y-5 flex-1 overflow-y-auto"
-                    variants={containerVariants}
-                    initial="hidden"
-                    animate="visible"
-                  >
-                    {quickFacts.map((fact, index) => (
-                      <motion.li
-                        key={index}
-                        variants={itemVariants}
-                        className="flex items-start gap-4"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
-                          {fact.icon}
-                        </div>
-                        <div>
-                          <h5 className="font-medium text-white text-base">
-                            {fact.title}
-                          </h5>
-                          <p className="text-gray-400 text-sm">
-                            {fact.content}
-                          </p>
-                        </div>
-                      </motion.li>
-                    ))}
-                  </motion.ul>
-
-                  <motion.div
-                    className="mt-4 pt-3 border-t border-white/10 text-center"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.8 }}
-                  >
-                    <p className="text-sm text-white/70">Tap to flip back</p>
-                  </motion.div>
-                </div>
-              </div>
+                </motion.div>
+              ))}
             </motion.div>
           </div>
-        </motion.div>
-
-        {/* Profile Info */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate={isVisible ? "visible" : "hidden"}
-          className="space-y-8"
-        >
-          <motion.div variants={itemVariants}>
-            <div className="inline-block">
-              <div className="flex items-center gap-2 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-full px-4 py-1.5 text-sm text-primary font-medium mb-4">
-                <span className="w-2 h-2 bg-primary rounded-full"></span>
-                <span>Full Stack Developer</span>
-              </div>
-            </div>
-            <h2 className="text-4xl lg:text-5xl font-bold mb-4 text-white">
-              <motion.span
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="inline-block"
-              >
-                Hello, I'm{" "}
-              </motion.span>
-              <motion.span
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="inline-block bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400"
-              >
-                Ilias Ahmed
-              </motion.span>
-            </h2>
-            <div className="w-20 h-1 bg-gradient-to-r from-primary to-purple-500 rounded-full"></div>
-          </motion.div>
-
-          <motion.div variants={itemVariants} className="space-y-4">
-            {[
-              "I'm a passionate full-stack developer with a love for creating beautiful, functional, and user-friendly web applications. With over 6 years of experience in the industry, I've worked on a wide range of projects from small business websites to large enterprise applications.",
-              "My approach combines technical expertise with creative problem-solving. I believe that great code should not only work flawlessly but also be maintainable, scalable, and accessible.",
-              "When I'm not coding, you can find me exploring new technologies, contributing to open-source projects, or sharing my knowledge through technical writing and mentoring.",
-            ].map((paragraph, i) => (
-              <motion.p
-                key={i}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 + i * 0.1 }}
-                className="text-gray-300 leading-relaxed"
-              >
-                {paragraph}
-              </motion.p>
-            ))}
-          </motion.div>
-
-          <motion.div variants={itemVariants} className="pt-2">
-            <div className="flex flex-wrap gap-3">
-              {skills.map((skill, i) => (
-                <motion.span
-                  key={i}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.5 + i * 0.1 }}
-                  className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-gray-300 hover:bg-primary/10 hover:border-primary/30 transition-colors"
-                >
-                  {skill}
-                </motion.span>
-              ))}
-            </div>
-          </motion.div>
-
-          <motion.div
-            variants={itemVariants}
-            className="flex flex-wrap gap-4 pt-4"
-          >
-            <motion.a
-              href="/contact"
-              className="px-6 py-3 bg-gradient-to-r from-primary to-purple-600 text-white rounded-full flex items-center gap-2 transition-all hover:shadow-lg hover:shadow-primary/20"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <span>Get in Touch</span>
-              <ArrowRight size={18} />
-            </motion.a>
-
-            <motion.button
-              onClick={() => {
-                setShowResume(true);
-                triggerHapticFeedback();
-              }}
-              className="px-6 py-3 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-full flex items-center gap-2 transition-all"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <span>Resume</span>
-              <Download size={18} />
-            </motion.button>
-          </motion.div>
-        </motion.div>
+        </div>
       </div>
 
-      {/* Experience stats */}
+      {/* Life Metrics - Better mobile grid */}
       <motion.div
-        className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6"
-        initial={{ opacity: 0, y: 20 }}
+        className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4"
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.8, duration: 0.5 }}
+        transition={{ delay: 0.7, duration: 0.8 }}
       >
-        {stats.map((item, i) => (
+        {lifeMetrics.map((metric, index) => (
           <motion.div
-            key={i}
+            key={metric.label}
+            className="p-4 md:p-6 rounded-xl md:rounded-2xl backdrop-blur-sm border text-center group"
+            style={{
+              backgroundColor: isDark
+                ? "rgba(255,255,255,0.03)"
+                : "rgba(255,255,255,0.8)",
+              borderColor: isDark
+                ? "rgba(255,255,255,0.05)"
+                : "rgba(0,0,0,0.1)",
+            }}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.9 + i * 0.1 }}
-            className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-6 text-center hover:bg-white/10 transition-colors group"
+            transition={{ delay: 0.8 + index * 0.1 }}
+            whileHover={{
+              y: -4,
+              backgroundColor: `${accentColors.primary}08`,
+              borderColor: `${accentColors.primary}30`,
+            }}
+            whileTap={{ scale: 0.95 }}
           >
-            <motion.h3
-              className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400"
-              whileHover={{ scale: 1.05 }}
-              transition={{ type: "spring", stiffness: 300 }}
+            <motion.div
+              className="w-10 h-10 md:w-12 md:h-12 mx-auto mb-2 md:mb-3 rounded-lg md:rounded-xl flex items-center justify-center"
+              style={{ backgroundColor: `${accentColors.primary}20` }}
+              whileHover={{ scale: 1.1, rotate: 5 }}
             >
-              {item.number}
-            </motion.h3>
-            <p className="text-gray-400 text-sm mt-2 group-hover:text-gray-300 transition-colors">
-              {item.label}
-            </p>
+              <metric.icon
+                size={20}
+                className="md:w-6 md:h-6"
+                style={{ color: accentColors.primary }}
+              />
+            </motion.div>
+
+            <motion.div
+              className="text-lg md:text-2xl font-bold mb-1"
+              style={{ color: accentColors.primary }}
+              whileHover={{ scale: 1.05 }}
+            >
+              {metric.value}
+            </motion.div>
+
+            <div className="text-xs md:text-sm font-medium mb-1">
+              {metric.label}
+            </div>
+            <div className="text-xs opacity-60 hidden md:block">
+              {metric.description}
+            </div>
           </motion.div>
         ))}
       </motion.div>
 
-      {/* Resume Viewer Modal */}
-      <ResumeViewer isOpen={showResume} onClose={() => setShowResume(false)} />
-    </div>
+      {/* Quote Section - Responsive text */}
+      <motion.div
+        className="text-center py-6 md:py-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1, duration: 0.8 }}
+      >
+        <motion.blockquote
+          className="text-lg md:text-xl lg:text-2xl font-medium italic max-w-3xl mx-auto px-4"
+          style={{ color: accentColors.primary }}
+          initial={{ scale: 0.9 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 1.2, duration: 0.6 }}
+        >
+          "The best code is not just functional—it's an expression of empathy,
+          crafted with the user's journey in mind."
+        </motion.blockquote>
+        <motion.p
+          className="mt-3 md:mt-4 opacity-70 text-sm md:text-base"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.7 }}
+          transition={{ delay: 1.4 }}
+        >
+          — My approach to development
+        </motion.p>
+      </motion.div>
+    </motion.div>
   );
 };
 

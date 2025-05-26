@@ -1,7 +1,9 @@
-import { memo } from "react";
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { X, ExternalLink, GitBranch, Clock, Award } from "lucide-react";
 import { Skill, ViewMode } from "./types";
 import { triggerHapticFeedback } from "@/utils/haptics";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface SkillDetailModalProps {
   selectedSkill: Skill | null;
@@ -13,87 +15,67 @@ interface SkillDetailModalProps {
 }
 
 /**
- * SkillDetailModal displays detailed information about a selected skill
+ * SkillDetailModal component displays detailed information about a selected skill
  */
 const SkillDetailModal = ({
   selectedSkill,
   setSelectedSkill,
-  viewMode,
   setViewMode,
   setComparisonSkills,
   skills,
 }: SkillDetailModalProps) => {
+  const { isDark, getAccentColors } = useTheme();
+  const accentColors = getAccentColors();
+
+  // Handle escape key press
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedSkill(null);
+      }
+    };
+
+    if (selectedSkill) {
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "unset";
+    };
+  }, [selectedSkill, setSelectedSkill]);
+
+  const handleCompareClick = () => {
+    if (selectedSkill) {
+      setViewMode("comparison");
+      setComparisonSkills([selectedSkill.id]);
+      setSelectedSkill(null);
+      triggerHapticFeedback();
+    }
+  };
+
+  const getProficiencyLevel = (level: number) => {
+    if (level >= 90) return { label: "Expert", color: "#10b981" };
+    if (level >= 75) return { label: "Advanced", color: "#3b82f6" };
+    if (level >= 60) return { label: "Intermediate", color: "#f59e0b" };
+    return { label: "Beginner", color: "#6b7280" };
+  };
+
+  const getRelatedSkills = (currentSkill: Skill) => {
+    return skills
+      .filter(
+        (skill) =>
+          skill.id !== currentSkill.id &&
+          skill.category === currentSkill.category
+      )
+      .slice(0, 3);
+  };
+
   if (!selectedSkill) return null;
 
-  // Handle closing the modal
-  const handleClose = () => {
-    setSelectedSkill(null);
-    triggerHapticFeedback();
-  };
-
-  // Handle comparison button click
-  const handleCompare = () => {
-    setSelectedSkill(null);
-    setViewMode("comparison");
-    setComparisonSkills([selectedSkill.id]);
-    triggerHapticFeedback();
-  };
-
-  // Generate skill metrics for visualization
-  const generateSkillMetrics = (skill: Skill) => [
-    {
-      name: "Problem Solving",
-      value: Math.round(skill.level * 0.9),
-    },
-    {
-      name: "Code Quality",
-      value: Math.min(100, Math.round(skill.level * 1.1)),
-    },
-    {
-      name: "Best Practices",
-      value: Math.round(skill.level * 0.95),
-    },
-    {
-      name: "Performance Optimization",
-      value: Math.round(skill.level * 0.85),
-    },
-  ];
-
-  // Generate timeline points
-  const generateTimelinePoints = (skill: Skill) => [
-    {
-      year: `${new Date().getFullYear() - skill.yearsExperience}`,
-      label: "Started Learning",
-    },
-    {
-      year: `${
-        new Date().getFullYear() - Math.round(skill.yearsExperience * 0.7)
-      }`,
-      label: "First Project",
-    },
-    {
-      year: `${
-        new Date().getFullYear() - Math.round(skill.yearsExperience * 0.3)
-      }`,
-      label: "Professional Use",
-    },
-    {
-      year: `${new Date().getFullYear()}`,
-      label: "Current",
-    },
-  ];
-
-  // Get related skills
-  const relatedSkills = skills
-    .filter(
-      (skill) =>
-        skill.category === selectedSkill.category &&
-        skill.id !== selectedSkill.id
-    )
-    .slice(0, 4);
-
-  const skillMetrics = generateSkillMetrics(selectedSkill);
-  const timelinePoints = generateTimelinePoints(selectedSkill);
+  const proficiencyLevel = getProficiencyLevel(selectedSkill.level);
+  const relatedSkills = getRelatedSkills(selectedSkill);
 
   return (
     <AnimatePresence>
@@ -101,203 +83,307 @@ const SkillDetailModal = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
-        onClick={handleClose}
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        style={{ backgroundColor: "rgba(0, 0, 0, 0.8)" }}
+        onClick={() => setSelectedSkill(null)}
       >
         <motion.div
-          initial={{ scale: 0.9, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 20 }}
-          className="bg-gray-900 rounded-xl p-6 max-w-2xl w-full border border-gray-700 shadow-2xl"
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border backdrop-blur-lg"
+          style={{
+            backgroundColor: isDark
+              ? "rgba(17, 24, 39, 0.95)"
+              : "rgba(255, 255, 255, 0.95)",
+            borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+          }}
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="flex justify-between items-start mb-6">
-            <div className="flex items-center">
-              <div
-                className="w-14 h-14 flex items-center justify-center rounded-lg mr-4 text-3xl"
+          {/* Header */}
+          <div
+            className="p-6 border-b"
+            style={{
+              borderColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+            }}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex items-center">
+                <div
+                  className="w-16 h-16 flex items-center justify-center rounded-xl mr-4 text-3xl"
+                  style={{
+                    backgroundColor: `${selectedSkill.color}20`,
+                    color: selectedSkill.color,
+                  }}
+                >
+                  {selectedSkill.icon}
+                </div>
+                <div>
+                  <h2
+                    className="text-2xl font-bold"
+                    style={{ color: isDark ? "#ffffff" : "#1f2937" }}
+                  >
+                    {selectedSkill.name}
+                  </h2>
+                  <p
+                    className="text-sm"
+                    style={{
+                      color: isDark
+                        ? "rgba(255,255,255,0.6)"
+                        : "rgba(0,0,0,0.6)",
+                    }}
+                  >
+                    {selectedSkill.category}
+                  </p>
+                  <div className="flex items-center mt-2">
+                    <span
+                      className="px-3 py-1 rounded-full text-sm font-medium"
+                      style={{
+                        backgroundColor: `${proficiencyLevel.color}20`,
+                        color: proficiencyLevel.color,
+                      }}
+                    >
+                      {proficiencyLevel.label}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedSkill(null)}
+                className="p-2 rounded-lg transition-colors hover:opacity-70"
                 style={{
-                  backgroundColor: `${selectedSkill.color}20`,
-                  color: selectedSkill.color,
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.1)"
+                    : "rgba(0,0,0,0.1)",
+                  color: isDark ? "#ffffff" : "#1f2937",
                 }}
               >
-                {selectedSkill.icon}
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-white">
-                  {selectedSkill.name}
-                </h3>
-                <div className="flex items-center">
-                  <span className="text-gray-400">
-                    {selectedSkill.category}
-                  </span>
-                  <span className="mx-2 text-gray-600">•</span>
-                  <span className="text-gray-400">
-                    {selectedSkill.level}% Proficiency
-                  </span>
-                </div>
-              </div>
+                <X size={20} />
+              </button>
             </div>
-
-            <button
-              className="text-gray-400 hover:text-white transition-colors"
-              onClick={handleClose}
-              aria-label="Close modal"
-            >
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M6 18L18 6M6 6l12 12"
-                ></path>
-              </svg>
-            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Content */}
+          <div className="p-6 space-y-6">
+            {/* Description */}
             <div>
-              <h4 className="text-lg font-medium text-white mb-3">
-                Skill Overview
-              </h4>
-              <p className="text-gray-300 mb-4">{selectedSkill.description}</p>
+              <h3
+                className="text-lg font-semibold mb-3"
+                style={{ color: isDark ? "#ffffff" : "#1f2937" }}
+              >
+                About This Skill
+              </h3>
+              <p
+                className="leading-relaxed"
+                style={{
+                  color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)",
+                }}
+              >
+                {selectedSkill.description}
+              </p>
+            </div>
 
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-400">Proficiency</span>
-                    <span className="text-white">{selectedSkill.level}%</span>
-                  </div>
-                  <div className="h-2.5 bg-gray-700 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full"
-                      style={{ backgroundColor: selectedSkill.color }}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${selectedSkill.level}%` }}
-                      transition={{ duration: 0.8 }}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-800 rounded-lg p-3">
-                    <div className="text-gray-400 text-sm mb-1">Projects</div>
-                    <div className="text-2xl font-bold text-white">
-                      {selectedSkill.projects}
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-800 rounded-lg p-3">
-                    <div className="text-gray-400 text-sm mb-1">Experience</div>
-                    <div className="text-2xl font-bold text-white">
-                      {selectedSkill.yearsExperience} years
-                    </div>
-                  </div>
-                </div>
+            {/* Proficiency Bar */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <h3
+                  className="text-lg font-semibold"
+                  style={{ color: isDark ? "#ffffff" : "#1f2937" }}
+                >
+                  Proficiency Level
+                </h3>
+                <span
+                  className="text-2xl font-bold"
+                  style={{ color: selectedSkill.color }}
+                >
+                  {selectedSkill.level}%
+                </span>
+              </div>
+              <div
+                className="h-4 rounded-full overflow-hidden"
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.1)"
+                    : "rgba(0,0,0,0.1)",
+                }}
+              >
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{ backgroundColor: selectedSkill.color }}
+                  initial={{ width: 0 }}
+                  animate={{ width: `${selectedSkill.level}%` }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                />
               </div>
             </div>
 
-            <div>
-              <h4 className="text-lg font-medium text-white mb-3">
-                Skill Breakdown
-              </h4>
-
-              <div className="space-y-3">
-                {skillMetrics.map((metric) => (
-                  <div key={metric.name}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-gray-300">{metric.name}</span>
-                      <span className="text-gray-400">{metric.value}%</span>
-                    </div>
-                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                      <motion.div
-                        className="h-full rounded-full"
-                        style={{
-                          background: `linear-gradient(90deg, ${selectedSkill.color}80, ${selectedSkill.color})`,
-                        }}
-                        initial={{ width: 0 }}
-                        animate={{ width: `${metric.value}%` }}
-                        transition={{ duration: 0.8, delay: 0.2 }}
-                      />
-                    </div>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                {
+                  icon: GitBranch,
+                  label: "Projects",
+                  value: selectedSkill.projects,
+                },
+                {
+                  icon: Clock,
+                  label: "Experience",
+                  value: `${selectedSkill.yearsExperience}y`,
+                },
+                { icon: Award, label: "Level", value: proficiencyLevel.label },
+              ].map((stat) => (
+                <div
+                  key={stat.label}
+                  className="p-4 rounded-lg border text-center"
+                  style={{
+                    backgroundColor: isDark
+                      ? "rgba(255,255,255,0.05)"
+                      : "rgba(255,255,255,0.8)",
+                    borderColor: isDark
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <stat.icon
+                    size={24}
+                    className="mx-auto mb-2"
+                    style={{ color: selectedSkill.color }}
+                  />
+                  <div
+                    className="text-lg font-bold"
+                    style={{ color: isDark ? "#ffffff" : "#1f2937" }}
+                  >
+                    {stat.value}
                   </div>
-                ))}
-              </div>
+                  <div
+                    className="text-sm"
+                    style={{
+                      color: isDark
+                        ? "rgba(255,255,255,0.6)"
+                        : "rgba(0,0,0,0.6)",
+                    }}
+                  >
+                    {stat.label}
+                  </div>
+                </div>
+              ))}
+            </div>
 
-              <div className="mt-6">
-                <h4 className="text-lg font-medium text-white mb-3">
+            {/* Related Skills */}
+            {relatedSkills.length > 0 && (
+              <div>
+                <h3
+                  className="text-lg font-semibold mb-3"
+                  style={{ color: isDark ? "#ffffff" : "#1f2937" }}
+                >
                   Related Skills
-                </h4>
-                <div className="flex flex-wrap gap-2">
+                </h3>
+                <div className="grid grid-cols-3 gap-3">
                   {relatedSkills.map((skill) => (
-                    <button
+                    <motion.button
                       key={skill.id}
-                      className="px-3 py-1.5 bg-gray-800 hover:bg-gray-700 rounded-full text-sm text-gray-300 transition-colors"
                       onClick={() => {
                         setSelectedSkill(skill);
                         triggerHapticFeedback();
                       }}
+                      className="p-3 rounded-lg border transition-all duration-200 hover:shadow-md"
+                      style={{
+                        backgroundColor: isDark
+                          ? "rgba(255,255,255,0.05)"
+                          : "rgba(255,255,255,0.8)",
+                        borderColor: isDark
+                          ? "rgba(255,255,255,0.1)"
+                          : "rgba(0,0,0,0.1)",
+                      }}
+                      whileHover={{
+                        scale: 1.05,
+                        borderColor: skill.color,
+                      }}
+                      whileTap={{ scale: 0.95 }}
                     >
-                      {skill.name}
-                    </button>
+                      <div
+                        className="w-8 h-8 flex items-center justify-center rounded-lg mx-auto mb-2"
+                        style={{
+                          backgroundColor: `${skill.color}20`,
+                          color: skill.color,
+                        }}
+                      >
+                        {skill.icon}
+                      </div>
+                      <p
+                        className="text-xs font-medium truncate"
+                        style={{ color: isDark ? "#ffffff" : "#1f2937" }}
+                      >
+                        {skill.name}
+                      </p>
+                      <p
+                        className="text-xs"
+                        style={{
+                          color: isDark
+                            ? "rgba(255,255,255,0.6)"
+                            : "rgba(0,0,0,0.6)",
+                        }}
+                      >
+                        {skill.level}%
+                      </p>
+                    </motion.button>
                   ))}
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="pt-4 border-t border-gray-700">
-            <h4 className="text-lg font-medium text-white mb-3">
-              Skill Timeline
-            </h4>
-            <div className="relative h-20">
-              <div className="absolute left-0 right-0 top-1/2 h-0.5 bg-gray-700 -translate-y-1/2"></div>
-
-              {/* Timeline points */}
-              {timelinePoints.map((point, index, array) => {
-                const position = (index / (array.length - 1)) * 100;
-
-                return (
-                  <motion.div
-                    key={point.year}
-                    className="absolute top-1/2 -translate-y-1/2"
-                    style={{ left: `${position}%` }}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.2 + index * 0.1 }}
-                  >
-                    <div className="w-4 h-4 rounded-full bg-purple-600 mb-2 mx-auto"></div>
-                    <div className="text-center">
-                      <div className="text-white text-sm">{point.year}</div>
-                      <div className="text-gray-400 text-xs">{point.label}</div>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mt-8 flex justify-end space-x-3">
-            {viewMode !== "comparison" && (
-              <button
-                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
-                onClick={handleCompare}
-              >
-                Compare with Others
-              </button>
             )}
 
-            <button
-              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-              onClick={handleClose}
-            >
-              Close
-            </button>
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-4">
+              <motion.button
+                onClick={handleCompareClick}
+                className="flex-1 py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2"
+                style={{
+                  backgroundColor: accentColors.primary,
+                  color: "white",
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <GitBranch size={18} />
+                Compare Skills
+              </motion.button>
+
+              <motion.button
+                onClick={() => {
+                  // This could open external documentation or portfolio
+                  window.open(
+                    `https://developer.mozilla.org/en-US/search?q=${selectedSkill.name}`,
+                    "_blank"
+                  );
+                  triggerHapticFeedback();
+                }}
+                className="py-3 px-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center gap-2 border"
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(255,255,255,0.8)",
+                  borderColor: isDark
+                    ? "rgba(255,255,255,0.1)"
+                    : "rgba(0,0,0,0.1)",
+                  color: isDark ? "#ffffff" : "#1f2937",
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <ExternalLink size={18} />
+                Learn More
+              </motion.button>
+            </div>
+          </div>
+
+          {/* Decorative Elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 opacity-10 pointer-events-none">
+            <div
+              className="w-full h-full rounded-full blur-2xl"
+              style={{ backgroundColor: selectedSkill.color }}
+            />
           </div>
         </motion.div>
       </motion.div>
@@ -305,5 +391,4 @@ const SkillDetailModal = ({
   );
 };
 
-export default memo(SkillDetailModal);
-
+export default SkillDetailModal;

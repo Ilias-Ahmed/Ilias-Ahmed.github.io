@@ -1,64 +1,92 @@
-import React, {
+import {
   createContext,
-  useContext,
-  useState,
-  useEffect,
   useCallback,
+  useContext,
+  useEffect,
+  useState,
+  useMemo,
+  ReactNode,
 } from "react";
-import Lenis from "@studio-freight/lenis";
-import { scrollToElement } from "@/utils/scroll";
+import {
+  scrollToSection,
+  getCurrentSection,
+  initSmoothScrolling,
+  ScrollOptions,
+} from "@/utils/scroll";
+import Lenis from "lenis";
 
-export type NavSection = {
+export interface NavSection {
+  id: string;
   name: string;
   href: string;
-  id: string;
   keywords?: string[];
-};
+  description?: string;
+}
 
 interface NavigationContextType {
+  // Core navigation state
   activeSection: string;
-  setActiveSection: React.Dispatch<React.SetStateAction<string>>;
   sections: NavSection[];
   lenis: Lenis | null;
+
+  // Navigation functions
   navigateToSection: (
     sectionId: string,
-    options?: { offset?: number; duration?: number }
-  ) => void;
+    options?: ScrollOptions
+  ) => Promise<void>;
+  setActiveSection: (sectionId: string) => void;
+
+  // Menu state
   isMenuOpen: boolean;
   toggleMenu: () => void;
   closeMenu: () => void;
+  openMenu: () => void;
+
+  // Utility functions
+  getSectionByKeyword: (keyword: string) => NavSection | null;
+  getNextSection: () => string | null;
+  getPreviousSection: () => string | null;
+
+  // Scroll state
+  isScrolling: boolean;
+  scrollProgress: number;
 }
 
 const defaultSections: NavSection[] = [
   {
+    id: "home",
     name: "Home",
     href: "#home",
-    id: "home",
-    keywords: ["start", "landing", "main"],
+    keywords: ["start", "landing", "main", "top"],
+    description: "Welcome section",
   },
   {
-    name: "Projects",
-    href: "#projects",
-    id: "projects",
-    keywords: ["work", "portfolio", "showcase"],
-  },
-  {
-    name: "Skills",
-    href: "#skills",
-    id: "skills",
-    keywords: ["abilities", "expertise", "tech stack"],
-  },
-  {
+    id: "about",
     name: "About",
     href: "#about",
-    id: "about",
-    keywords: ["me", "bio", "profile"],
+    keywords: ["me", "bio", "profile", "story"],
+    description: "About me section",
   },
   {
+    id: "skills",
+    name: "Skills",
+    href: "#skills",
+    keywords: ["abilities", "expertise", "tech", "stack", "technologies"],
+    description: "Technical skills and expertise",
+  },
+  {
+    id: "projects",
+    name: "Projects",
+    href: "#projects",
+    keywords: ["work", "portfolio", "showcase", "demos"],
+    description: "Project portfolio",
+  },
+  {
+    id: "contact",
     name: "Contact",
     href: "#contact",
-    id: "contact",
-    keywords: ["message", "get in touch", "email"],
+    keywords: ["message", "touch", "email", "reach"],
+    description: "Get in touch section",
   },
 ];
 
@@ -66,177 +94,289 @@ const NavigationContext = createContext<NavigationContextType | undefined>(
   undefined
 );
 
-export const useNavigation = () => {
+export function useNavigation(): NavigationContextType {
   const context = useContext(NavigationContext);
   if (!context) {
     throw new Error("useNavigation must be used within a NavigationProvider");
   }
   return context;
-};
+}
 
 interface NavigationProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
   customSections?: NavSection[];
 }
 
-export const NavigationProvider: React.FC<NavigationProviderProps> = ({
+export function NavigationProvider({
   children,
   customSections,
-}) => {
-  const [activeSection, setActiveSection] = useState("home");
+}: NavigationProviderProps): React.ReactElement {
+  const sections = useMemo(
+    () => customSections || defaultSections,
+    [customSections]
+  );
+
+  // Core state
+  const [activeSection, setActiveSection] = useState<string>(
+    sections[0]?.id || "home"
+  );
   const [lenis, setLenis] = useState<Lenis | null>(null);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const sections = customSections || defaultSections;
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [isScrolling, setIsScrolling] = useState<boolean>(false);
+  const [scrollProgress, setScrollProgress] = useState<number>(0);
 
-  // Detect if device is mobile
-  const isMobile =
-    typeof window !== "undefined"
-      ? /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-          navigator.userAgent
-        )
-      : false;
-
-  // Initialize Lenis smooth scroll
+  // Initialize smooth scrolling
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    const lenisInstance = initSmoothScrolling();
+    setLenis(lenisInstance);
 
-    try {
-      const lenisInstance = new Lenis({
-        duration: isMobile ? 1.0 : 1.2, // Slightly increased for smoother feel
-        easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        orientation: "vertical",
-        gestureOrientation: "vertical",
-        smoothWheel: true,
-        wheelMultiplier: isMobile ? 1.0 : 0.8, // Adjusted for mobile
-        touchMultiplier: 1.5, // Increased for better touch response
-        infinite: false,
-        // smoothTouch: true, // Removed as it is not a valid property
-      });
-
-      setLenis(lenisInstance);
-
-      const raf = (time: number) => {
-        lenisInstance.raf(time);
-        requestAnimationFrame(raf);
-      };
-
-      requestAnimationFrame(raf);
-
-      return () => {
+    return () => {
+      if (lenisInstance) {
         lenisInstance.destroy();
-      };
-    } catch (error) {
-      console.error("Failed to initialize Lenis:", error);
-      return () => {};
-    }
-  }, [isMobile]);
+        // Fixed: Remove any type
+        if (typeof window !== "undefined") {
+          delete ((window as unknown) as Record<string, unknown>).__lenis;
+        }
+      }
+    };
+  }, []);
 
-  // Track active section based on scroll position
+  // Track scroll progress and active section
   useEffect(() => {
-    const handleScroll = () => {
-      if (typeof window === "undefined") return;
+    let scrollTimer: ReturnType<typeof setTimeout>;
 
-      const scrollPosition = window.scrollY;
+    const handleScroll = (): void => {
+      // Calculate scroll progress
+      const scrollHeight =
+        document.documentElement.scrollHeight - window.innerHeight;
+      const progress = scrollHeight > 0 ? window.scrollY / scrollHeight : 0;
+      setScrollProgress(Math.min(1, Math.max(0, progress)));
 
-      const sectionElements = sections.map((section) => ({
-        id: section.id,
-        offset: document.getElementById(section.id)?.offsetTop || 0,
-        height: document.getElementById(section.id)?.offsetHeight || 0,
-      }));
+      // Track scrolling state
+      setIsScrolling(true);
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => setIsScrolling(false), 150);
 
-      // Sort sections by their position on the page
-      sectionElements.sort((a, b) => a.offset - b.offset);
-
-      // Find the current section
-      const currentSection = sectionElements.find(
-        (section) =>
-          scrollPosition >= section.offset - 100 &&
-          scrollPosition < section.offset + section.height - 100
-      );
-
-      if (currentSection) {
-        setActiveSection(currentSection.id);
-      } else if (scrollPosition < sectionElements[0]?.offset) {
-        // If we're above the first section, set it as active
-        setActiveSection(sectionElements[0]?.id || "home");
-      } else if (
-        scrollPosition + window.innerHeight >=
-        document.body.scrollHeight - 50
-      ) {
-        // If we're at the bottom of the page, set the last section as active
-        setActiveSection(
-          sectionElements[sectionElements.length - 1]?.id || "contact"
-        );
+      // Update active section
+      const sectionIds = sections.map((s) => s.id);
+      const currentSection = getCurrentSection(sectionIds);
+      if (currentSection && currentSection !== activeSection) {
+        setActiveSection(currentSection);
       }
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
-    // Initial check
-    handleScroll();
+    handleScroll(); // Initial call
 
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      clearTimeout(scrollTimer);
     };
-  }, [sections]);
+  }, [sections, activeSection]);
 
-  // Handle menu open/close effects
+  // Handle menu body scroll lock
   useEffect(() => {
     if (typeof document === "undefined") return;
 
     if (isMenuOpen) {
+      const scrollBarWidth =
+        window.innerWidth - document.documentElement.clientWidth;
       document.body.style.overflow = "hidden";
-      document.documentElement.classList.add("menu-open");
+      document.body.style.paddingRight = `${scrollBarWidth}px`;
     } else {
       document.body.style.overflow = "";
-      document.documentElement.classList.remove("menu-open");
+      document.body.style.paddingRight = "";
     }
 
     return () => {
       document.body.style.overflow = "";
-      document.documentElement.classList.remove("menu-open");
+      document.body.style.paddingRight = "";
     };
   }, [isMenuOpen]);
 
-  // Navigation function
+  // Navigation functions
   const navigateToSection = useCallback(
-    (sectionId: string, options?: { offset?: number; duration?: number }) => {
-      if (!sectionId || typeof document === "undefined") return;
-
-      const element = document.getElementById(sectionId);
-      if (!element) {
-        console.warn(`Element with id "${sectionId}" not found`);
+    async (sectionId: string, options?: ScrollOptions): Promise<void> => {
+      if (!sections.find((s) => s.id === sectionId)) {
+        console.warn(`Section "${sectionId}" not found`);
         return;
       }
 
-      scrollToElement(lenis, element, options);
+      try {
+        await scrollToSection(sectionId, options);
+        setActiveSection(sectionId);
 
-      // Close menu if it's open
-      if (isMenuOpen) {
-        setIsMenuOpen(false);
+        if (isMenuOpen) {
+          setIsMenuOpen(false);
+        }
+      } catch (error) {
+        console.error(`Failed to navigate to section "${sectionId}":`, error);
       }
     },
-    [lenis, isMenuOpen]
+    [sections, isMenuOpen]
   );
 
-  const toggleMenu = useCallback(() => setIsMenuOpen((prev) => !prev), []);
-  const closeMenu = useCallback(() => setIsMenuOpen(false), []);
+  const setActiveSectionCallback = useCallback(
+    (sectionId: string): void => {
+      if (sections.find((s) => s.id === sectionId)) {
+        setActiveSection(sectionId);
+      }
+    },
+    [sections]
+  );
 
-  const value = {
-    activeSection,
-    setActiveSection,
-    sections,
-    lenis,
-    navigateToSection,
+  // Menu functions
+  const toggleMenu = useCallback((): void => {
+    setIsMenuOpen((prev) => !prev);
+  }, []);
+
+  const closeMenu = useCallback((): void => {
+    setIsMenuOpen(false);
+  }, []);
+
+  const openMenu = useCallback((): void => {
+    setIsMenuOpen(true);
+  }, []);
+
+  // Utility functions
+  const getSectionByKeyword = useCallback(
+    (keyword: string): NavSection | null => {
+      const normalizedKeyword = keyword.toLowerCase().trim();
+
+      return (
+        sections.find(
+          (section) =>
+            section.keywords?.some(
+              (k) =>
+                k.toLowerCase().includes(normalizedKeyword) ||
+                normalizedKeyword.includes(k.toLowerCase())
+            ) ||
+            section.name.toLowerCase().includes(normalizedKeyword) ||
+            section.id.toLowerCase().includes(normalizedKeyword)
+        ) || null
+      );
+    },
+    [sections]
+  );
+
+  const getNextSection = useCallback((): string | null => {
+    const currentIndex = sections.findIndex((s) => s.id === activeSection);
+    if (currentIndex === -1 || currentIndex === sections.length - 1)
+      return null;
+    return sections[currentIndex + 1].id;
+  }, [sections, activeSection]);
+
+  const getPreviousSection = useCallback((): string | null => {
+    const currentIndex = sections.findIndex((s) => s.id === activeSection);
+    if (currentIndex <= 0) return null;
+    return sections[currentIndex - 1].id;
+  }, [sections, activeSection]);
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      // Escape to close menu
+      if (e.key === "Escape" && isMenuOpen) {
+        e.preventDefault();
+        closeMenu();
+        return;
+      }
+
+      // Don't handle other shortcuts when typing
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement ||
+        (e.target as HTMLElement)?.isContentEditable
+      ) {
+        return;
+      }
+
+      // Navigation shortcuts (Alt + number)
+      if (e.altKey && !e.ctrlKey && !e.metaKey) {
+        const num = parseInt(e.key);
+        if (num >= 1 && num <= sections.length) {
+          e.preventDefault();
+          navigateToSection(sections[num - 1].id);
+        }
+      }
+
+      // Arrow navigation
+      if (e.key === "ArrowDown" && e.altKey) {
+        e.preventDefault();
+        const next = getNextSection();
+        if (next) navigateToSection(next);
+      }
+
+      if (e.key === "ArrowUp" && e.altKey) {
+        e.preventDefault();
+        const prev = getPreviousSection();
+        if (prev) navigateToSection(prev);
+      }
+
+      // Home/End navigation
+      if (e.key === "Home" && e.altKey) {
+        e.preventDefault();
+        navigateToSection(sections[0].id);
+      }
+
+      if (e.key === "End" && e.altKey) {
+        e.preventDefault();
+        navigateToSection(sections[sections.length - 1].id);
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [
     isMenuOpen,
-    toggleMenu,
     closeMenu,
-  };
+    navigateToSection,
+    getNextSection,
+    getPreviousSection,
+    sections,
+  ]);
+
+  // Memoized context value
+  const contextValue = useMemo(
+    (): NavigationContextType => ({
+      activeSection,
+      sections,
+      lenis,
+      navigateToSection,
+      setActiveSection: setActiveSectionCallback,
+      isMenuOpen,
+      toggleMenu,
+      closeMenu,
+      openMenu,
+      getSectionByKeyword,
+      getNextSection,
+      getPreviousSection,
+      isScrolling,
+      scrollProgress,
+    }),
+    [
+      activeSection,
+      sections,
+      lenis,
+      navigateToSection,
+      setActiveSectionCallback,
+      isMenuOpen,
+      toggleMenu,
+      closeMenu,
+      openMenu,
+      getSectionByKeyword,
+      getNextSection,
+      getPreviousSection,
+      isScrolling,
+      scrollProgress,
+    ]
+  );
 
   return (
-    <NavigationContext.Provider value={value}>
+    <NavigationContext.Provider value={contextValue}>
       {children}
     </NavigationContext.Provider>
   );
-};
+}
 
 export default NavigationContext;
