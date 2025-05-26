@@ -1,29 +1,35 @@
 import { useRef, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const InteractiveMap = () => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  const { isDark, getAccentColors } = useTheme();
+  const accentColors = getAccentColors();
 
   useEffect(() => {
     // Simulated map with canvas
-    if (!mapContainerRef.current) return;
+    const container = mapContainerRef.current;
+    if (!container) return;
 
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    canvas.width = mapContainerRef.current.clientWidth;
+    canvas.width = container.clientWidth;
     canvas.height = 220;
 
     // Add canvas to the DOM
-    mapContainerRef.current.appendChild(canvas);
+    container.appendChild(canvas);
 
     // Draw cosmic map-like pattern
-    ctx.fillStyle = "rgba(15, 15, 20, 1)";
+    ctx.fillStyle = isDark ? "rgba(15, 15, 20, 1)" : "rgba(240, 240, 245, 1)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     // Draw grid
-    ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+    ctx.strokeStyle = isDark
+      ? "rgba(255, 255, 255, 0.1)"
+      : "rgba(0, 0, 0, 0.1)";
     ctx.lineWidth = 0.5;
 
     const cellSize = 20;
@@ -52,7 +58,9 @@ const InteractiveMap = () => {
 
       ctx.beginPath();
       ctx.arc(x, y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.3})`;
+      ctx.fillStyle = isDark
+        ? `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.3})`
+        : `rgba(0, 0, 0, ${Math.random() * 0.3 + 0.2})`;
       ctx.fill();
     }
 
@@ -68,11 +76,13 @@ const InteractiveMap = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       // Redraw background
-      ctx.fillStyle = "rgba(15, 15, 20, 1)";
+      ctx.fillStyle = isDark ? "rgba(15, 15, 20, 1)" : "rgba(240, 240, 245, 1)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       // Redraw grid
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+      ctx.strokeStyle = isDark
+        ? "rgba(255, 255, 255, 0.1)"
+        : "rgba(0, 0, 0, 0.1)";
 
       // Vertical lines
       for (let x = 0; x <= canvas.width; x += cellSize) {
@@ -101,30 +111,49 @@ const InteractiveMap = () => {
 
         ctx.beginPath();
         ctx.arc(x, y, radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${twinkle * 0.5 + 0.3})`;
+        ctx.fillStyle = isDark
+          ? `rgba(255, 255, 255, ${twinkle * 0.5 + 0.3})`
+          : `rgba(0, 0, 0, ${twinkle * 0.3 + 0.2})`;
         ctx.fill();
       }
 
       // Current time for animation
       const pulseTime = Date.now() * 0.001;
 
+      // Convert hex to RGB for canvas
+      const hexToRgb = (hex: string) => {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result
+          ? {
+              r: parseInt(result[1], 16),
+              g: parseInt(result[2], 16),
+              b: parseInt(result[3], 16),
+            }
+          : null;
+      };
+
+      const primaryRgb = hexToRgb(accentColors.primary);
+      const rgbString = primaryRgb
+        ? `${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}`
+        : "139, 92, 246";
+
       // Outer pulse ring
       const pulseRadius = 20 + Math.sin(pulseTime * 2) * 10;
       ctx.beginPath();
       ctx.arc(centerX, centerY, pulseRadius, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(var(--primary-rgb), 0.1)";
+      ctx.fillStyle = `rgba(${rgbString}, 0.1)`;
       ctx.fill();
 
       // Middle ring
       ctx.beginPath();
       ctx.arc(centerX, centerY, 15, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(var(--primary-rgb), 0.3)";
+      ctx.fillStyle = `rgba(${rgbString}, 0.3)`;
       ctx.fill();
 
       // Inner circle - location marker
       ctx.beginPath();
       ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
-      ctx.fillStyle = "hsl(var(--primary))";
+      ctx.fillStyle = accentColors.primary;
       ctx.fill();
 
       // Draw cosmic rays from the center
@@ -141,7 +170,7 @@ const InteractiveMap = () => {
         ctx.beginPath();
         ctx.moveTo(startX, startY);
         ctx.lineTo(endX, endY);
-        ctx.strokeStyle = "rgba(var(--primary-rgb), 0.3)";
+        ctx.strokeStyle = `rgba(${rgbString}, 0.3)`;
         ctx.lineWidth = 1;
         ctx.stroke();
       }
@@ -152,25 +181,38 @@ const InteractiveMap = () => {
 
     // Start animation
     drawPulse();
-
     return () => {
-      if (mapContainerRef.current && mapContainerRef.current.contains(canvas)) {
-        mapContainerRef.current.removeChild(canvas);
+      if (container && container.contains(canvas)) {
+        container.removeChild(canvas);
       }
     };
-  }, []);
+  }, [isDark, accentColors]);
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.3 }}
-      className="dark:bg-[#0f0f14] rounded-xl overflow-hidden shadow-lg border border-white/5 cosmic-card"
+      className="rounded-xl overflow-hidden shadow-lg border relative"
+      style={{
+        backgroundColor: isDark ? "#0f0f14" : "#f0f0f5",
+        borderColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
+      }}
     >
       <div ref={mapContainerRef} className="w-full h-[195px] relative">
         <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-          <div className="px-3 py-1.5 bg-black/50 backdrop-blur-sm rounded-full text-sm flex items-center space-x-1">
-            <span className="w-2 h-2 bg-primary rounded-full animate-pulse"></span>
+          <div
+            className="px-3 py-1.5 backdrop-blur-sm rounded-full text-sm flex items-center space-x-1"
+            style={{
+              backgroundColor: isDark
+                ? "rgba(0,0,0,0.5)"
+                : "rgba(255,255,255,0.5)",
+            }}
+          >
+            <span
+              className="w-2 h-2 rounded-full animate-pulse"
+              style={{ backgroundColor: accentColors.primary }}
+            />
             <span>Kamrup, Assam</span>
           </div>
         </div>
@@ -180,3 +222,4 @@ const InteractiveMap = () => {
 };
 
 export default InteractiveMap;
+

@@ -211,7 +211,6 @@ const DotsNavigation: React.FC<DotsNavigationProps> = ({
                   boxShadow: isActive
                     ? `0 0 20px ${accentColors.glow}, 0 0 40px ${accentColors.glow}40`
                     : "none",
-                  focusRingColor: accentColors.primary,
                 }}
                 onClick={() => handleNavigation(section.id)}
                 onKeyDown={(e) => handleKeyDown(e, section.id)}
