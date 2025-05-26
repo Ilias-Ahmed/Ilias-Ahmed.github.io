@@ -177,7 +177,14 @@ const ProjectsSection = () => {
         >
           <div className="inline-flex items-center justify-center mb-6">
             <Sparkles className="w-6 h-6 text-primary mr-3 animate-pulse" />
-            <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary via-purple-400 to-blue-500">
+            <h2
+              className="text-4xl sm:text-5xl md:text-6xl font-bold bg-clip-text text-transparent"
+              style={{
+              backgroundImage: `linear-gradient(90deg, ${accentColors.primary}, ${accentColors.secondary}, ${accentColors.tertiary})`,
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              }}
+            >
               Featured Projects
             </h2>
             <Sparkles className="w-6 h-6 text-primary ml-3 animate-pulse" />

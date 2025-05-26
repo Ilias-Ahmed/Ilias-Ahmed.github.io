@@ -2,6 +2,7 @@ import { memo } from "react";
 import { motion } from "framer-motion";
 import { Skill, ViewMode } from "./types";
 import { triggerHapticFeedback } from "@/utils/haptics";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface GridViewProps {
   skills: Skill[];
@@ -23,8 +24,10 @@ const GridView = ({
   hoveredSkill,
   setViewMode,
   setComparisonSkills,
-  viewMode,
 }: GridViewProps) => {
+  const { isDark, getAccentColors } = useTheme();
+  const accentColors = getAccentColors();
+
   // Handle comparison button click
   const handleCompareClick = (e: React.MouseEvent, skillId: string) => {
     e.stopPropagation();
@@ -36,10 +39,20 @@ const GridView = ({
   return (
     <div className="max-w-6xl mx-auto">
       <div className="text-center mb-10">
-        <h3 className="text-2xl sm:text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-400">
+        <h3
+          className="text-2xl sm:text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r"
+          style={{
+            backgroundImage: `linear-gradient(to right, ${accentColors.primary}, ${accentColors.secondary})`,
+          }}
+        >
           Skills & Expertise
         </h3>
-        <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+        <p
+          className="max-w-2xl mx-auto"
+          style={{
+            color: isDark ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.6)",
+          }}
+        >
           A comprehensive showcase of my technical skills and areas of
           expertise, highlighting proficiency levels and practical experience.
         </p>
@@ -67,7 +80,7 @@ const GridView = ({
                   damping: 20,
                 },
               }}
-              className="relative group"
+              className="relative group cursor-pointer"
               onMouseEnter={() => setHoveredSkill(skill.id)}
               onMouseLeave={() => setHoveredSkill(null)}
               onClick={() => {
@@ -77,66 +90,100 @@ const GridView = ({
             >
               {/* Card Container */}
               <div
-                className={`relative overflow-hidden rounded-xl bg-gray-100 dark:bg-gradient-to-br dark:from-gray-800 dark:to-gray-900 p-6 h-full border transition-all duration-300 transform ${
-                  isHovered
-                    ? `border-${skill.color.replace(
-                        "#",
-                        ""
-                      )} shadow-lg shadow-${skill.color}20 -translate-y-1`
-                    : "border-gray-300 dark:border-gray-700 hover:border-purple-500 hover:-translate-y-1 hover:shadow-xl"
-                }`}
+                className="relative overflow-hidden rounded-xl p-6 h-full border transition-all duration-300 transform backdrop-blur-sm"
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(255,255,255,0.8)",
+                  borderColor: isHovered
+                    ? accentColors.primary
+                    : isDark
+                    ? "rgba(255,255,255,0.1)"
+                    : "rgba(0,0,0,0.1)",
+                  boxShadow: isHovered
+                    ? `0 20px 40px ${accentColors.shadow}`
+                    : "none",
+                  transform: isHovered ? "translateY(-4px)" : "translateY(0)",
+                }}
               >
                 {/* Background glow effect */}
                 <div
-                  className={`absolute inset-0 bg-gradient-to-br transition-opacity duration-500 dark:block hidden ${
-                    isHovered
-                      ? "opacity-30"
-                      : "opacity-0 group-hover:opacity-20"
-                  }`}
+                  className="absolute inset-0 transition-opacity duration-500"
                   style={{
-                    background: `radial-gradient(circle at center, ${skill.color}80 0%, transparent 70%)`,
+                    background: `radial-gradient(circle at center, ${skill.color}20 0%, transparent 70%)`,
+                    opacity: isHovered ? 0.3 : 0,
                     filter: "blur(20px)",
                   }}
                 />
 
                 {/* Skill Icon and Title */}
-                <div className="flex items-start mb-4">
+                <div className="flex items-start mb-4 relative z-10">
                   <div
-                    className={`w-12 h-12 flex items-center justify-center rounded-lg mr-4 text-2xl transition-all duration-300 ${
-                      isHovered ? "scale-110" : ""
-                    }`}
+                    className="w-12 h-12 flex items-center justify-center rounded-lg mr-4 text-2xl transition-all duration-300"
                     style={{
                       backgroundColor: `${skill.color}${
                         isHovered ? "30" : "20"
                       }`,
                       color: skill.color,
+                      transform: isHovered ? "scale(1.1)" : "scale(1)",
                     }}
                   >
                     {skill.icon}
                   </div>
                   <div>
-                    <h3 className="font-bold text-xl text-gray-800 dark:text-white">
+                    <h3
+                      className="font-bold text-xl transition-colors duration-300"
+                      style={{
+                        color: isDark ? "#ffffff" : "#1f2937",
+                      }}
+                    >
                       {skill.name}
                     </h3>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                    <span
+                      className="text-sm"
+                      style={{
+                        color: isDark
+                          ? "rgba(255,255,255,0.6)"
+                          : "rgba(0,0,0,0.6)",
+                      }}
+                    >
                       {skill.category}
                     </span>
                   </div>
                 </div>
 
                 {/* Skill Description */}
-                <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
+                <p
+                  className="text-sm mb-4 relative z-10"
+                  style={{
+                    color: isDark ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.7)",
+                  }}
+                >
                   {skill.description}
                 </p>
 
                 {/* Proficiency Bar */}
-                <div className="space-y-3">
+                <div className="space-y-3 relative z-10">
                   <div>
-                    <div className="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                    <div
+                      className="flex justify-between text-xs mb-1"
+                      style={{
+                        color: isDark
+                          ? "rgba(255,255,255,0.6)"
+                          : "rgba(0,0,0,0.6)",
+                      }}
+                    >
                       <span>Proficiency</span>
                       <span>{skill.level}%</span>
                     </div>
-                    <div className="h-2 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div
+                      className="h-2 rounded-full overflow-hidden"
+                      style={{
+                        backgroundColor: isDark
+                          ? "rgba(255,255,255,0.1)"
+                          : "rgba(0,0,0,0.1)",
+                      }}
+                    >
                       <motion.div
                         className="h-full"
                         style={{ backgroundColor: skill.color }}
@@ -154,79 +201,76 @@ const GridView = ({
                   <div className="flex justify-between text-sm">
                     <div className="flex items-center">
                       <svg
-                        className="w-4 h-4 text-gray-600 dark:text-gray-400 mr-1"
+                        className="w-4 h-4 mr-1"
                         fill="currentColor"
                         viewBox="0 0 20 20"
-                        xmlns="http://www.w3.org/2000/svg"
+                        style={{
+                          color: isDark
+                            ? "rgba(255,255,255,0.6)"
+                            : "rgba(0,0,0,0.6)",
+                        }}
                       >
-                        <path d="M7 3a1 1 0 000 2h6a1 1 0 100-2H7zM4 7a1 1 0 011-1h10a1 1 0 110 2H5a1 1 0 01-1-1zM2 11a2 2 0 012-2h12a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4z"></path>
+                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      <span className="text-gray-700 dark:text-gray-300">
-                        {skill.projects} Projects
+                      <span
+                        style={{
+                          color: isDark
+                            ? "rgba(255,255,255,0.6)"
+                            : "rgba(0,0,0,0.6)",
+                        }}
+                      >
+                        {skill.projects} projects
                       </span>
                     </div>
                     <div className="flex items-center">
                       <svg
-                        className="w-4 h-4 text-gray-600 dark:text-gray-400 mr-1"
+                        className="w-4 h-4 mr-1"
                         fill="currentColor"
                         viewBox="0 0 20 20"
-                        xmlns="http://www.w3.org/2000/svg"
+                        style={{
+                          color: isDark
+                            ? "rgba(255,255,255,0.6)"
+                            : "rgba(0,0,0,0.6)",
+                        }}
                       >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                          clipRule="evenodd"
-                        ></path>
+                        <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" />
                       </svg>
-                      <span className="text-gray-700 dark:text-gray-300">
-                        {skill.yearsExperience} Years
+                      <span
+                        style={{
+                          color: isDark
+                            ? "rgba(255,255,255,0.6)"
+                            : "rgba(0,0,0,0.6)",
+                        }}
+                      >
+                        {skill.yearsExperience}y exp
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div
-                  className={`absolute bottom-4 right-4 transition-all duration-300 flex space-x-2 ${
-                    isHovered
-                      ? "opacity-100 scale-100"
-                      : "opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100"
-                  }`}
+                {/* Compare Button */}
+                <motion.button
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium opacity-0 group-hover:opacity-100 transition-all duration-300"
+                  style={{
+                    backgroundColor: `${accentColors.primary}20`,
+                    color: accentColors.primary,
+                    border: `1px solid ${accentColors.primary}40`,
+                  }}
+                  onClick={(e) => handleCompareClick(e, skill.id)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  title="Compare this skill"
                 >
-                  {viewMode !== "comparison" && (
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      className={`p-2 rounded-full text-white ${
-                        isHovered ? "bg-purple-700" : "bg-purple-600"
-                      }`}
-                      onClick={(e) => handleCompareClick(e, skill.id)}
-                      aria-label={`Compare ${skill.name} with other skills`}
-                    >
-                      <svg
-                        className="w-4 h-4"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M5 4a1 1 0 00-2 0v7.268a2 2 0 000 3.464V16a1 1 0 102 0v-1.268a2 2 0 000-3.464V4zM11 4a1 1 0 10-2 0v1.268a2 2 0 000 3.464V16a1 1 0 102 0V8.732a2 2 0 000-3.464V4zM16 3a1 1 0 011 1v7.268a2 2 0 010 3.464V16a1 1 0 11-2 0v-1.268a2 2 0 010-3.464V4a1 1 0 011-1z"></path>
-                      </svg>
-                    </motion.button>
-                  )}
-                </div>
+                  ⚖️
+                </motion.button>
 
-                {/* Highlight indicator for hovered skill */}
-                {isHovered && (
-                  <motion.div
-                    className="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r"
-                    style={{
-                      backgroundImage: `linear-gradient(to right, transparent, ${skill.color}, transparent)`,
-                    }}
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: 0.3 }}
-                  />
-                )}
+                {/* Hover overlay */}
+                <motion.div
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                  style={{
+                    background: `linear-gradient(135deg, ${skill.color}05 0%, transparent 50%, ${accentColors.primary}05 100%)`,
+                  }}
+                />
               </div>
             </motion.div>
           );
