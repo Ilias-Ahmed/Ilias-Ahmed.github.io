@@ -1,6 +1,7 @@
 import { useNavigation } from "@/contexts/NavigationContext";
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useCallback, useState } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface DotsNavigationProps {
   position?: "left" | "right";
@@ -20,6 +21,8 @@ const DotsNavigation: React.FC<DotsNavigationProps> = ({
   const { sections, activeSection, navigateToSection, scrollProgress } =
     useNavigation();
   const [hoveredSection, setHoveredSection] = useState<string | null>(null);
+  const { isDark, getAccentColors } = useTheme();
+  const accentColors = getAccentColors();
 
   // Memoized size configurations
   const sizeConfig = React.useMemo(
@@ -88,16 +91,27 @@ const DotsNavigation: React.FC<DotsNavigationProps> = ({
   const getSectionProgress = useCallback(
     (sectionId: string) => {
       if (activeSection !== sectionId) return 0;
-      return scrollProgress && typeof scrollProgress === 'object' ? (scrollProgress[sectionId] as number) || 0 : 0;
-    },    [activeSection, scrollProgress]
+      return scrollProgress && typeof scrollProgress === "object"
+        ? (scrollProgress[sectionId] as number) || 0
+        : 0;
+    },
+    [activeSection, scrollProgress]
   );
+
+  // Don't render if no sections
+  if (!sections || sections.length === 0) {
+    return null;
+  }
 
   return (
     <nav
-      className={`fixed ${position === "right" ? "right-8" : "left-8"}
-        top-1/2 transform -translate-y-1/2 z-30 ${className}`}
+      className={`fixed ${position === "right" ? "right-6" : "left-6"}
+        top-1/2 transform -translate-y-1/2 z-40 ${className}`}
       role="navigation"
       aria-label="Section navigation"
+      style={{
+        filter: `drop-shadow(0 4px 12px ${accentColors.glow})`,
+      }}
     >
       <div className={`flex flex-col ${config.container}`}>
         {sections.map((section, index) => {
@@ -118,7 +132,7 @@ const DotsNavigation: React.FC<DotsNavigationProps> = ({
                     }}
                     animate={{
                       opacity: 1,
-                      x: position === "right" ? -10 : 10,
+                      x: position === "right" ? -12 : 12,
                       scale: 1,
                     }}
                     exit={{
@@ -127,15 +141,24 @@ const DotsNavigation: React.FC<DotsNavigationProps> = ({
                       scale: 0.9,
                     }}
                     transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                    className={`absolute top-1/2 transform -translate-y-1/2
+                    className={`absolute top-1/2 transform -translate-y-1/2 z-50
                       ${position === "right" ? "right-8" : "left-8"}
-                      px-3 py-1.5 bg-popover border border-border rounded-md
-                      shadow-md backdrop-blur-sm ${config.tooltip} font-medium
-                      whitespace-nowrap pointer-events-none`}
+                      px-3 py-2 rounded-lg shadow-lg backdrop-blur-sm border
+                      ${
+                        config.tooltip
+                      } font-medium whitespace-nowrap pointer-events-none`}
+                    style={{
+                      backgroundColor: isDark
+                        ? "rgba(17, 24, 39, 0.95)"
+                        : "rgba(255, 255, 255, 0.95)",
+                      borderColor: accentColors.border,
+                      color: isDark ? "#ffffff" : "#000000",
+                      boxShadow: `0 8px 32px ${accentColors.glow}`,
+                    }}
                   >
-                    <span>{section.name}</span>
+                    <span className="font-semibold">{section.name}</span>
                     {section.description && (
-                      <div className="text-xs text-muted-foreground mt-0.5">
+                      <div className="text-xs opacity-70 mt-1">
                         {section.description}
                       </div>
                     )}
@@ -148,12 +171,17 @@ const DotsNavigation: React.FC<DotsNavigationProps> = ({
                             ? "left-0 -translate-x-full"
                             : "right-0 translate-x-full"
                         }
-                        w-0 h-0 border-t-4 border-b-4 border-transparent
-                        ${
+                        w-0 h-0 border-t-4 border-b-4 border-transparent`}
+                      style={{
+                        borderRightColor:
                           position === "right"
-                            ? "border-r-4 border-r-border"
-                            : "border-l-4 border-l-border"
-                        }`}
+                            ? accentColors.border
+                            : "transparent",
+                        borderLeftColor:
+                          position === "left"
+                            ? accentColors.border
+                            : "transparent",
+                      }}
                     />
                   </motion.div>
                 )}
@@ -161,19 +189,39 @@ const DotsNavigation: React.FC<DotsNavigationProps> = ({
 
               {/* Navigation Dot */}
               <motion.button
-                className={`relative rounded-full border-2 transition-all duration-300
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-primary
+                className={`relative rounded-full border-2 transition-all duration-300 cursor-pointer
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-opacity-75
                   focus-visible:ring-offset-2 focus-visible:ring-offset-background
-                  ${
+                  backdrop-blur-sm ${
                     isActive
-                      ? `${config.activeDot} bg-primary border-primary shadow-lg shadow-primary/25`
-                      : `${config.dot} bg-background border-border hover:border-primary/50 hover:bg-primary/10`
+                      ? `${config.activeDot} shadow-lg`
+                      : `${config.dot} hover:scale-110`
                   }`}
+                style={{
+                  backgroundColor: isActive
+                    ? accentColors.primary
+                    : isDark
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "rgba(0, 0, 0, 0.1)",
+                  borderColor: isActive
+                    ? accentColors.primary
+                    : isDark
+                    ? "rgba(255, 255, 255, 0.3)"
+                    : "rgba(0, 0, 0, 0.3)",
+                  boxShadow: isActive
+                    ? `0 0 20px ${accentColors.glow}, 0 0 40px ${accentColors.glow}40`
+                    : "none",
+                  focusRingColor: accentColors.primary,
+                }}
                 onClick={() => handleNavigation(section.id)}
                 onKeyDown={(e) => handleKeyDown(e, section.id)}
                 onMouseEnter={() => handleMouseEnter(section.id)}
                 onMouseLeave={handleMouseLeave}
-                whileHover={{ scale: 1.2 }}
+                whileHover={{
+                  scale: 1.2,
+                  backgroundColor: accentColors.primary,
+                  borderColor: accentColors.primary,
+                }}
                 whileTap={{ scale: 0.9 }}
                 animate={{
                   scale: isActive ? 1.1 : 1,
@@ -182,6 +230,8 @@ const DotsNavigation: React.FC<DotsNavigationProps> = ({
                 transition={{
                   scale: { type: "spring", stiffness: 300, damping: 25 },
                   rotate: { duration: 0.6, ease: "easeInOut" },
+                  backgroundColor: { duration: 0.2 },
+                  borderColor: { duration: 0.2 },
                 }}
                 aria-label={`Navigate to ${section.name} section`}
                 aria-current={isActive ? "page" : undefined}
@@ -189,13 +239,36 @@ const DotsNavigation: React.FC<DotsNavigationProps> = ({
                 tabIndex={0}
               >
                 {/* Inner Progress Ring */}
-                {showProgress && isActive && (
+                {showProgress && isActive && sectionProgress > 0 && (
                   <motion.div
-                    className="absolute inset-0 rounded-full border-2 border-primary/30"
-                    initial={{ scale: 0 }}
+                    className="absolute inset-0 rounded-full border-2"
+                    style={{
+                      borderColor: `${accentColors.primary}60`,
+                      borderTopColor: accentColors.primary,
+                    }}
+                    initial={{ rotate: 0 }}
                     animate={{
-                      scale: [1, 1.3, 1],
-                      opacity: [0.5, 0, 0.5],
+                      rotate: 360,
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }}
+                  />
+                )}
+
+                {/* Pulsing animation for active dot */}
+                {isActive && (
+                  <motion.div
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      backgroundColor: accentColors.primary,
+                      opacity: 0.3,
+                    }}
+                    animate={{
+                      scale: [1, 1.5, 1],
+                      opacity: [0.3, 0, 0.3],
                     }}
                     transition={{
                       duration: 2,
@@ -205,7 +278,7 @@ const DotsNavigation: React.FC<DotsNavigationProps> = ({
                   />
                 )}
 
-                {/* Section Number */}
+                {/* Section Number for accessibility */}
                 <span className="sr-only">
                   Section {index + 1}: {section.name}
                 </span>
@@ -219,9 +292,11 @@ const DotsNavigation: React.FC<DotsNavigationProps> = ({
               {/* Connection Line to Next Dot */}
               {index < sections.length - 1 && showProgress && (
                 <motion.div
-                  className="absolute top-full left-1/2 transform -translate-x-1/2
-                    w-0.5 bg-border z-0"
+                  className="absolute top-full left-1/2 transform -translate-x-1/2 w-0.5 z-0"
                   style={{
+                    backgroundColor: isDark
+                      ? "rgba(255, 255, 255, 0.2)"
+                      : "rgba(0, 0, 0, 0.2)",
                     height: config.container.includes("space-y-2")
                       ? "8px"
                       : config.container.includes("space-y-3")
@@ -229,7 +304,14 @@ const DotsNavigation: React.FC<DotsNavigationProps> = ({
                       : "16px",
                   }}
                   initial={{ scaleY: 0 }}
-                  animate={{ scaleY: sectionProgress }}
+                  animate={{
+                    scaleY: sectionProgress,
+                    backgroundColor: isActive
+                      ? `${accentColors.primary}80`
+                      : isDark
+                      ? "rgba(255, 255, 255, 0.2)"
+                      : "rgba(0, 0, 0, 0.2)",
+                  }}
                   transition={{ ease: "easeOut", duration: 0.5 }}
                 />
               )}
@@ -241,7 +323,8 @@ const DotsNavigation: React.FC<DotsNavigationProps> = ({
       {/* Accessibility Info */}
       <div className="sr-only" aria-live="polite" aria-atomic="true">
         Currently viewing {sections.find((s) => s.id === activeSection)?.name}{" "}
-        section
+        section ({sections.findIndex((s) => s.id === activeSection) + 1} of{" "}
+        {sections.length})
       </div>
     </nav>
   );

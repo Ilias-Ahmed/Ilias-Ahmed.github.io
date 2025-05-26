@@ -54,6 +54,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
   const [panelMode, setPanelMode] = useState<PanelMode>("collapsed");
   const [activeTab, setActiveTab] = useState<TabType>("player");
   const [isDragging, setIsDragging] = useState(false);
+  const [showMobilePanel, setShowMobilePanel] = useState(false);
 
   const panelRef = useRef<HTMLDivElement>(null);
   const dragConstraintsRef = useRef<HTMLDivElement>(null);
@@ -80,7 +81,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
   const { config, updateConfig, resetToDefaults, isPerformanceMode } =
     useBackground();
 
-  // Dragging functionality
+  // Dragging functionality (desktop only)
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const springX = useSpring(x, { stiffness: 300, damping: 30 });
@@ -91,10 +92,10 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
   const [previousVolume, setPreviousVolume] = useState(volume);
   const [currentVisualizer, setCurrentVisualizer] = useState("bars");
 
-  // Auto-collapse on mobile
+  // Reset mobile state when switching to desktop
   useEffect(() => {
-    if (isMobile) {
-      setPanelMode("collapsed");
+    if (!isMobile) {
+      setShowMobilePanel(false);
     }
   }, [isMobile]);
 
@@ -179,7 +180,23 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
     []
   );
 
-  // Panel state handlers
+  // Mobile handlers
+  const handleMobileToggle = useCallback(() => {
+    setShowMobilePanel(!showMobilePanel);
+    if (!showMobilePanel) {
+      setPanelMode("audio");
+      setActiveTab("player");
+    } else {
+      setPanelMode("collapsed");
+    }
+  }, [showMobilePanel]);
+
+  const closeMobilePanel = useCallback(() => {
+    setShowMobilePanel(false);
+    setPanelMode("collapsed");
+  }, []);
+
+  // Desktop handlers
   const handleAudioClick = useCallback(() => {
     if (panelMode === "audio") {
       togglePlay();
@@ -198,18 +215,544 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
     setPanelMode("collapsed");
   }, []);
 
-  // Don't render on mobile
+  // Render mobile version
   if (isMobile) {
-    return null;
+    return (
+      <>
+        {/* Mobile Floating Button */}
+        <motion.div
+          className="fixed bottom-4 left-4 z-50"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 0.5 }}
+        >
+          <motion.button
+            onClick={handleMobileToggle}
+            className="relative p-4 rounded-full backdrop-blur-xl border shadow-2xl"
+            style={{
+              backgroundColor: isDark
+                ? "rgba(17, 24, 39, 0.95)"
+                : "rgba(255, 255, 255, 0.95)",
+              borderColor: accentColors.border,
+              boxShadow: `0 8px 32px ${accentColors.glow}`,
+            }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            animate={showMobilePanel ? { rotate: 180 } : { rotate: 0 }}
+          >
+            {/* Status indicators */}
+            <div className="absolute -top-1 -right-1 flex gap-1">
+              {isPlaying && (
+                <motion.div
+                  className="w-3 h-3 rounded-full bg-green-500"
+                  animate={{ scale: [1, 1.2, 1], opacity: [1, 0.7, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                />
+              )}
+              {error && <div className="w-3 h-3 bg-red-500 rounded-full" />}
+              {isPerformanceMode && (
+                <div className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse" />
+              )}
+            </div>
+
+            {showMobilePanel ? (
+              <X size={24} style={{ color: accentColors.primary }} />
+            ) : (
+              <Settings2 size={24} style={{ color: accentColors.primary }} />
+            )}
+          </motion.button>
+        </motion.div>
+
+        {/* Mobile Panel Overlay */}
+        <AnimatePresence>
+          {showMobilePanel && (
+            <>
+              {/* Backdrop */}
+              <motion.div
+                className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={closeMobilePanel}
+              />
+
+              {/* Panel */}
+              <motion.div
+                className="fixed bottom-0 left-0 right-0 z-50 backdrop-blur-xl border-t shadow-2xl max-h-[80vh] overflow-hidden"
+                style={{
+                  backgroundColor: isDark
+                    ? "rgba(17, 24, 39, 0.98)"
+                    : "rgba(255, 255, 255, 0.98)",
+                  borderColor: accentColors.border,
+                  boxShadow: `0 -20px 60px ${accentColors.glow}`,
+                }}
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              >
+                {/* Handle */}
+                <div className="flex justify-center py-2">
+                  <div
+                    className="w-12 h-1 rounded-full opacity-50"
+                    style={{ backgroundColor: accentColors.primary }}
+                  />
+                </div>
+
+                {/* Header */}
+                <div
+                  className="px-6 py-4 border-b flex items-center justify-between"
+                  style={{ borderColor: accentColors.border }}
+                >
+                  <h3 className="font-semibold text-lg">
+                    {panelMode === "audio"
+                      ? "Audio Controls"
+                      : "Background Settings"}
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <motion.button
+                      onClick={() => {
+                        setPanelMode(panelMode === "audio" ? "background" : "audio");
+                        setActiveTab(panelMode === "audio" ? "modes" : "player");
+                      }}
+                      className="p-2 rounded-lg transition-colors"
+                      style={{ color: accentColors.primary }}
+                      whileHover={{
+                        backgroundColor: `${accentColors.primary}20`,
+                      }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      {panelMode === "audio" ? (
+                        <Settings2 size={20} />
+                      ) : (
+                        <Music size={20} />
+                      )}
+                    </motion.button>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="px-6 py-4 overflow-y-auto max-h-96">
+                  {panelMode === "audio" && (
+                    <div className="space-y-6">
+                      {error && (
+                        <motion.div
+                          className="p-4 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                        >
+                          <p className="text-sm">{error}</p>
+                        </motion.div>
+                      )}
+
+                      {/* Progress Bar */}
+                      <div>
+                        <div className="flex justify-between text-sm opacity-70 mb-3">
+                          <span>{formatTime(currentTime)}</span>
+                          <span>{formatTime(duration)}</span>
+                        </div>
+                        <div
+                          className="w-full h-4 bg-gray-200 dark:bg-gray-700 rounded-full cursor-pointer overflow-hidden"
+                          onClick={handleSeek}
+                        >
+                          <motion.div
+                            className="h-full rounded-full"
+                            style={{
+                              background: `linear-gradient(90deg, ${accentColors.primary}, ${accentColors.secondary})`,
+                            }}
+                            initial={{ width: 0 }}
+                            animate={{ width: `${progress}%` }}
+                            transition={{ duration: 0.2 }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Playback Controls */}
+                      <div className="flex items-center justify-center gap-6">
+                        <motion.button
+                          onClick={togglePlay}
+                          className="p-6 rounded-full shadow-lg"
+                          style={{ backgroundColor: accentColors.primary }}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          disabled={isLoading}
+                        >
+                          {isLoading ? (
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{
+                                duration: 1,
+                                repeat: Infinity,
+                                ease: "linear",
+                              }}
+                            >
+                              <Headphones size={28} className="text-white" />
+                            </motion.div>
+                          ) : isPlaying ? (
+                            <Pause size={28} className="text-white" />
+                          ) : (
+                            <Play size={28} className="text-white" />
+                          )}
+                        </motion.button>
+                      </div>
+
+                      {/* Volume Control */}
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">Volume</span>
+                          <span className="text-sm opacity-70">
+                            {Math.round(volume * 100)}%
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <motion.button
+                                                      onClick={toggleMute}
+                            className="p-3 rounded-lg transition-colors"
+                            style={{ color: accentColors.primary }}
+                            whileHover={{
+                              backgroundColor: `${accentColors.primary}20`,
+                            }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            {isMuted || volume === 0 ? (
+                              <VolumeX size={20} />
+                            ) : (
+                              <Volume2 size={20} />
+                            )}
+                          </motion.button>
+                          <div className="flex-1">
+                            <input
+                              type="range"
+                              min="0"
+                              max="1"
+                              step="0.01"
+                              value={volume}
+                              onChange={(e) =>
+                                setVolume(parseFloat(e.target.value))
+                              }
+                              className="w-full h-3 rounded-lg appearance-none cursor-pointer"
+                              style={{
+                                background: `linear-gradient(to right, ${
+                                  accentColors.primary
+                                } 0%, ${accentColors.primary} ${
+                                  volume * 100
+                                }%, rgb(156 163 175) ${
+                                  volume * 100
+                                }%, rgb(156 163 175) 100%)`,
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Visualizer Selection */}
+                      <div>
+                        <h4 className="text-sm font-medium mb-3">Visualizer</h4>
+                        <div className="grid grid-cols-2 gap-3">
+                          {visualizerTypes.map((viz) => (
+                            <motion.button
+                              key={viz.id}
+                              onClick={() => setCurrentVisualizer(viz.id)}
+                              className="p-4 rounded-lg border-2 transition-all"
+                              style={{
+                                backgroundColor:
+                                  currentVisualizer === viz.id
+                                    ? `${accentColors.primary}20`
+                                    : "transparent",
+                                borderColor:
+                                  currentVisualizer === viz.id
+                                    ? accentColors.primary
+                                    : "transparent",
+                              }}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <div className="flex flex-col items-center gap-2">
+                                <viz.icon
+                                  size={20}
+                                  style={{ color: accentColors.primary }}
+                                />
+                                <span className="text-sm">{viz.name}</span>
+                              </div>
+                            </motion.button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {panelMode === "background" && (
+                    <div className="space-y-6">
+                      {/* Background Modes */}
+                      <div>
+                        <h4 className="text-sm font-medium mb-3">Background Mode</h4>
+                        <div className="grid grid-cols-3 gap-2">
+                          {backgroundModes.map((mode) => (
+                            <motion.button
+                              key={mode.value}
+                              onClick={() => updateConfig({ mode: mode.value })}
+                              className="p-3 rounded-lg border-2 transition-all"
+                              style={{
+                                backgroundColor:
+                                  config.mode === mode.value
+                                    ? `${accentColors.primary}20`
+                                    : "transparent",
+                                borderColor:
+                                  config.mode === mode.value
+                                    ? accentColors.primary
+                                    : "transparent",
+                              }}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <div className="flex flex-col items-center gap-1">
+                                <mode.icon
+                                  size={16}
+                                  style={{ color: accentColors.primary }}
+                                />
+                                <span className="text-xs">{mode.label}</span>
+                              </div>
+                            </motion.button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Intensity Level */}
+                      <div>
+                        <h4 className="text-sm font-medium mb-3">Intensity Level</h4>
+                        <div className="flex gap-2">
+                          {intensityLevels.map((level) => (
+                            <motion.button
+                              key={level.value}
+                              onClick={() =>
+                                updateConfig({ intensity: level.value })
+                              }
+                              className="flex-1 p-3 rounded-lg border transition-all"
+                              style={{
+                                backgroundColor:
+                                  config.intensity === level.value
+                                    ? `${accentColors.primary}20`
+                                    : "transparent",
+                                borderColor:
+                                  config.intensity === level.value
+                                    ? accentColors.primary
+                                    : "#e5e7eb",
+                              }}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <span className="text-sm">{level.label}</span>
+                            </motion.button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Performance Settings */}
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            Particle Count: {config.particleCount}
+                          </label>
+                          <input
+                            type="range"
+                            min="10"
+                            max="200"
+                            value={config.particleCount}
+                            onChange={(e) =>
+                              updateConfig({
+                                particleCount: parseInt(e.target.value),
+                              })
+                            }
+                            className="w-full h-3 rounded-lg appearance-none cursor-pointer"
+                            style={{
+                              background: `linear-gradient(to right, ${
+                                accentColors.primary
+                              } 0%, ${accentColors.primary} ${
+                                ((config.particleCount - 10) / 190) * 100
+                              }%, rgb(156 163 175) ${
+                                ((config.particleCount - 10) / 190) * 100
+                              }%, rgb(156 163 175) 100%)`,
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            Animation Speed: {config.animationSpeed.toFixed(1)}x
+                          </label>
+                          <input
+                            type="range"
+                            min="0.1"
+                            max="3"
+                            step="0.1"
+                            value={config.animationSpeed}
+                            onChange={(e) =>
+                              updateConfig({
+                                animationSpeed: parseFloat(e.target.value),
+                              })
+                            }
+                            className="w-full h-3 rounded-lg appearance-none cursor-pointer"
+                            style={{
+                              background: `linear-gradient(to right, ${
+                                accentColors.primary
+                              } 0%, ${accentColors.primary} ${
+                                ((config.animationSpeed - 0.1) / 2.9) * 100
+                              }%, rgb(156 163 175) ${
+                                ((config.animationSpeed - 0.1) / 2.9) * 100
+                              }%, rgb(156 163 175) 100%)`,
+                            }}
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium mb-2">
+                            Background Opacity: {Math.round(config.opacity * 100)}%
+                          </label>
+                          <input
+                            type="range"
+                            min="0"
+                            max="1"
+                            step="0.05"
+                            value={config.opacity}
+                            onChange={(e) =>
+                              updateConfig({
+                                opacity: parseFloat(e.target.value),
+                              })
+                            }
+                            className="w-full h-3 rounded-lg appearance-none cursor-pointer"
+                            style={{
+                              background: `linear-gradient(to right, ${
+                                accentColors.primary
+                              } 0%, ${accentColors.primary} ${
+                                config.opacity * 100
+                              }%, rgb(156 163 175) ${
+                                config.opacity * 100
+                              }%, rgb(156 163 175) 100%)`,
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Toggle Settings */}
+                      <div className="space-y-3">
+                        <h4 className="text-sm font-medium">Effects</h4>
+                        {[
+                          {
+                            key: "enableAudioVisualization",
+                            label: "Audio Visualization",
+                            desc: "React to audio",
+                          },
+                          {
+                            key: "enableInteractivity",
+                            label: "Mouse Interaction",
+                            desc: "Respond to touch",
+                          },
+                          {
+                            key: "enableParallax",
+                            label: "Parallax Effect",
+                            desc: "Depth movement",
+                          },
+                          {
+                            key: "adaptToSection",
+                            label: "Section Adaptation",
+                            desc: "Change with sections",
+                          },
+                        ].map(({ key, label, desc }) => (
+                          <div
+                            key={key}
+                            className="flex items-center justify-between p-3 rounded-lg border"
+                            style={{ borderColor: accentColors.border }}
+                          >
+                            <div>
+                              <div className="font-medium text-sm">{label}</div>
+                              <div className="text-xs opacity-70">{desc}</div>
+                            </div>
+                            <motion.button
+                              onClick={() =>
+                                updateConfig({
+                                  [key]: !config[key as keyof typeof config],
+                                })
+                              }
+                              className="px-4 py-2 rounded-full text-sm font-medium transition-all"
+                              style={{
+                                backgroundColor: config[
+                                  key as keyof typeof config
+                                ]
+                                  ? accentColors.primary
+                                  : "transparent",
+                                color: config[key as keyof typeof config]
+                                  ? "white"
+                                  : accentColors.primary,
+                                border: `1px solid ${accentColors.primary}`,
+                              }}
+                              whileTap={{ scale: 0.95 }}
+                            >
+                              {config[key as keyof typeof config] ? "ON" : "OFF"}
+                            </motion.button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Performance Warning */}
+                      {isPerformanceMode && (
+                        <motion.div
+                          className="p-4 bg-yellow-500/20 border border-yellow-500/30 rounded-lg"
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Zap size={18} className="text-yellow-600" />
+                            <span className="text-sm font-medium">
+                              Performance Mode Active
+                            </span>
+                          </div>
+                          <p className="text-xs opacity-70 mt-1">
+                            Settings optimized for better performance
+                          </p>
+                        </motion.div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div
+                  className="px-6 py-4 border-t flex items-center justify-between"
+                  style={{ borderColor: accentColors.border }}
+                >
+                  <div className="text-sm opacity-70">
+                    {panelMode === "audio"
+                      ? `${formatTime(currentTime)} / ${formatTime(duration)}`
+                      : `${config.mode} • ${config.intensity}`}
+                  </div>
+                  <motion.button
+                    onClick={resetToDefaults}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors"
+                    style={{ color: accentColors.primary }}
+                    whileHover={{
+                      backgroundColor: `${accentColors.primary}20`,
+                    }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <RotateCcw size={14} />
+                    Reset
+                  </motion.button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+      </>
+    );
   }
 
+  // Desktop version
   return (
     <>
-      {/* Drag constraints */}
+      {/* Drag constraints (desktop only) */}
       <div
         ref={dragConstraintsRef}
-        className="fixed inset-4 pointer-events-none"
-        style={{ zIndex: 80 }}
+        className="fixed inset-4 pointer-events-none z-40"
       />
 
       {/* Main Control Panel */}
@@ -223,13 +766,14 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
         onDragStart={() => setIsDragging(true)}
         onDragEnd={() => setIsDragging(false)}
         whileDrag={{ scale: 1.02, rotate: 1 }}
+        layout
       >
         <motion.div
           className="relative"
           layout
           transition={{ duration: 0.3, ease: "easeInOut" }}
         >
-          {/* Compact Control Bar */}
+          {/* Desktop Compact Control Bar */}
           <motion.div
             className="flex items-center gap-2 rounded-2xl backdrop-blur-xl border shadow-2xl"
             style={{
@@ -269,7 +813,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                 backgroundColor: `${accentColors.primary}15`,
               }}
               whileTap={{ scale: 0.95 }}
-              title={
+                            title={
                 panelMode === "audio"
                   ? "Toggle Playback"
                   : "Open Audio Controls"
@@ -333,7 +877,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
               <Settings2 size={20} style={{ color: accentColors.primary }} />
             </motion.button>
 
-            {/* Expand indicator */}
+            {/* Close button when expanded */}
             {panelMode !== "collapsed" && (
               <motion.button
                 onClick={closePanel}
@@ -351,7 +895,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
             )}
           </motion.div>
 
-          {/* Expanded Panel */}
+          {/* Expanded Panel - Desktop */}
           <AnimatePresence>
             {panelMode !== "collapsed" && (
               <motion.div
@@ -379,18 +923,16 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                         ? "Audio Controls"
                         : "Background Settings"}
                     </h3>
-                    <div className="flex items-center gap-2">
-                      <motion.button
-                        onClick={() => setPanelMode("collapsed")}
-                        className="p-1.5 rounded-lg transition-colors"
-                        style={{ color: accentColors.primary }}
-                        whileHover={{
-                          backgroundColor: `${accentColors.primary}20`,
-                        }}
-                      >
-                        <Maximize2 size={14} />
-                      </motion.button>
-                    </div>
+                    <motion.button
+                      onClick={closePanel}
+                      className="p-1.5 rounded-lg transition-colors"
+                      style={{ color: accentColors.primary }}
+                      whileHover={{
+                        backgroundColor: `${accentColors.primary}20`,
+                      }}
+                    >
+                      <Maximize2 size={14} />
+                    </motion.button>
                   </div>
 
                   {/* Tab Navigation */}
@@ -400,7 +942,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                         { id: "player", label: "Player", icon: Music },
                         { id: "visualizer", label: "Visualizer", icon: Waves },
                       ].map(({ id, label, icon: Icon }) => (
-                        <button
+                        <motion.button
                           key={id}
                           onClick={() => setActiveTab(id as TabType)}
                           className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all whitespace-nowrap ${
@@ -414,10 +956,16 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                                 ? accentColors.primary
                                 : "transparent",
                           }}
+                          whileHover={
+                            activeTab !== id
+                              ? { backgroundColor: `${accentColors.primary}10` }
+                              : {}
+                          }
+                          whileTap={{ scale: 0.95 }}
                         >
                           <Icon size={14} />
                           {label}
-                        </button>
+                        </motion.button>
                       ))}
 
                     {panelMode === "background" &&
@@ -426,7 +974,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                         { id: "performance", label: "Performance", icon: Cpu },
                         { id: "effects", label: "Effects", icon: Monitor },
                       ].map(({ id, label, icon: Icon }) => (
-                        <button
+                        <motion.button
                           key={id}
                           onClick={() => setActiveTab(id as TabType)}
                           className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all whitespace-nowrap ${
@@ -440,10 +988,16 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                                 ? accentColors.primary
                                 : "transparent",
                           }}
+                          whileHover={
+                            activeTab !== id
+                              ? { backgroundColor: `${accentColors.primary}10` }
+                              : {}
+                          }
+                          whileTap={{ scale: 0.95 }}
                         >
                           <Icon size={14} />
                           {label}
-                        </button>
+                        </motion.button>
                       ))}
                   </div>
                 </div>
@@ -454,9 +1008,13 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                   {activeTab === "player" && (
                     <div className="space-y-4">
                       {error && (
-                        <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-sm">
+                        <motion.div
+                          className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-400 text-sm"
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                        >
                           {error}
-                        </div>
+                        </motion.div>
                       )}
 
                       {/* Progress Bar */}
@@ -473,7 +1031,6 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                             className="h-full rounded-full"
                             style={{
                               background: `linear-gradient(90deg, ${accentColors.primary}, ${accentColors.secondary})`,
-                              width: `${progress}%`,
                             }}
                             initial={{ width: 0 }}
                             animate={{ width: `${progress}%` }}
@@ -490,8 +1047,20 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                           style={{ backgroundColor: accentColors.primary }}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
+                          disabled={isLoading}
                         >
-                          {isPlaying ? (
+                          {isLoading ? (
+                            <motion.div
+                              animate={{ rotate: 360 }}
+                              transition={{
+                                duration: 1,
+                                repeat: Infinity,
+                                ease: "linear",
+                              }}
+                            >
+                              <Headphones size={24} className="text-white" />
+                            </motion.div>
+                          ) : isPlaying ? (
                             <Pause size={24} className="text-white" />
                           ) : (
                             <Play size={24} className="text-white" />
@@ -501,17 +1070,21 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
 
                       {/* Volume Control */}
                       <div className="flex items-center gap-3">
-                        <button
+                        <motion.button
                           onClick={toggleMute}
                           className="p-2 rounded-lg hover:bg-opacity-10 transition-colors"
                           style={{ color: accentColors.primary }}
+                          whileHover={{
+                            backgroundColor: `${accentColors.primary}20`,
+                          }}
+                          whileTap={{ scale: 0.95 }}
                         >
                           {isMuted || volume === 0 ? (
                             <VolumeX size={18} />
                           ) : (
                             <Volume2 size={18} />
                           )}
-                        </button>
+                        </motion.button>
                         <div className="flex-1">
                           <input
                             type="range"
@@ -548,7 +1121,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                         <motion.button
                           key={viz.id}
                           onClick={() => setCurrentVisualizer(viz.id)}
-                          className={`p-4 rounded-lg border-2 transition-all duration-200`}
+                          className="p-4 rounded-lg border-2 transition-all duration-200"
                           style={{
                             backgroundColor:
                               currentVisualizer === viz.id
@@ -614,7 +1187,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                         </label>
                         <div className="flex gap-2">
                           {intensityLevels.map((level) => (
-                            <button
+                            <motion.button
                               key={level.value}
                               onClick={() =>
                                 updateConfig({ intensity: level.value })
@@ -630,16 +1203,18 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                                     ? accentColors.primary
                                     : "#e5e7eb",
                               }}
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
                             >
                               <span className="text-sm">{level.label}</span>
-                            </button>
+                            </motion.button>
                           ))}
                         </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Performance Tab */}
+                                    {/* Performance Tab */}
                   {activeTab === "performance" && (
                     <div className="space-y-4">
                       <div>
@@ -698,7 +1273,11 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                       </div>
 
                       {isPerformanceMode && (
-                        <div className="p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+                        <motion.div
+                          className="p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-lg"
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                        >
                           <div className="flex items-center gap-2">
                             <Zap size={16} className="text-yellow-600" />
                             <span className="text-sm font-medium">
@@ -708,7 +1287,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                           <p className="text-xs opacity-70 mt-1">
                             Settings optimized for better performance
                           </p>
-                        </div>
+                        </motion.div>
                       )}
                     </div>
                   )}
@@ -718,8 +1297,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                     <div className="space-y-4">
                       <div>
                         <label className="block text-sm font-medium mb-2">
-                          Background Opacity: {Math.round(config.opacity * 100)}
-                          %
+                          Background Opacity: {Math.round(config.opacity * 100)}%
                         </label>
                         <input
                           type="range"
@@ -776,7 +1354,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                               <div className="font-medium text-sm">{label}</div>
                               <div className="text-xs opacity-70">{desc}</div>
                             </div>
-                            <button
+                            <motion.button
                               onClick={() =>
                                 updateConfig({
                                   [key]: !config[key as keyof typeof config],
@@ -792,12 +1370,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                                 color: config[key as keyof typeof config]
                                   ? "white"
                                   : "inherit",
+                                border: `1px solid ${accentColors.primary}`,
                               }}
+                              whileTap={{ scale: 0.95 }}
                             >
-                              {config[key as keyof typeof config]
-                                ? "On"
-                                : "Off"}
-                            </button>
+                              {config[key as keyof typeof config] ? "ON" : "OFF"}
+                            </motion.button>
                           </div>
                         ))}
                       </div>
@@ -815,22 +1393,112 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
                       ? `${formatTime(currentTime)} / ${formatTime(duration)}`
                       : `${config.mode} • ${config.intensity}`}
                   </div>
-                  <button
+                  <motion.button
                     onClick={resetToDefaults}
                     className="flex items-center gap-1 text-xs opacity-70 hover:opacity-100 transition-opacity"
                     style={{ color: accentColors.primary }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
                     <RotateCcw size={12} />
                     Reset
-                  </button>
+                  </motion.button>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
         </motion.div>
       </motion.div>
+
+      {/* Custom styles for better mobile experience */}
+      <style jsx>{`
+        /* Custom range slider styles */
+        input[type="range"] {
+          -webkit-appearance: none;
+          appearance: none;
+          background: transparent;
+          cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-track {
+          background: transparent;
+          height: 100%;
+          border-radius: 9999px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: ${accentColors.primary};
+          cursor: pointer;
+          border: 2px solid white;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        input[type="range"]::-moz-range-track {
+          background: transparent;
+          height: 100%;
+          border-radius: 9999px;
+          border: none;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+          height: 20px;
+          width: 20px;
+          border-radius: 50%;
+          background: ${accentColors.primary};
+          cursor: pointer;
+          border: 2px solid white;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          transition: all 0.2s ease;
+        }
+
+        input[type="range"]::-moz-range-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Smooth scrolling for mobile panel */
+        .mobile-panel-content {
+          scroll-behavior: smooth;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        /* Better touch targets for mobile */
+        @media (max-width: 768px) {
+          button {
+            min-height: 44px;
+            min-width: 44px;
+          }
+
+          input[type="range"] {
+            min-height: 44px;
+          }
+        }
+
+        /* Backdrop blur fallback */
+        @supports not (backdrop-filter: blur(12px)) {
+          .backdrop-blur-xl {
+            background-color: ${isDark
+              ? "rgba(17, 24, 39, 0.95)"
+              : "rgba(255, 255, 255, 0.95)"
+            } !important;
+          }
+        }
+      `}</style>
     </>
   );
 };
 
 export default ControlPanel;
+
+
