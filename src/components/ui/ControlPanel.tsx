@@ -1411,7 +1411,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({ className = "" }) => {
       </motion.div>
 
       {/* Custom styles for better mobile experience */}
-      <style jsx>{`
+      <style>{`
         /* Custom range slider styles */
         input[type="range"] {
           -webkit-appearance: none;
