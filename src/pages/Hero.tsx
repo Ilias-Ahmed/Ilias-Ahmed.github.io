@@ -331,15 +331,6 @@ const Hero: React.FC = () => {
     [isMobile]
   );
 
-  const overlayStyles = useMemo(
-    () => ({
-      background: isDark
-        ? "linear-gradient(to right, rgba(17, 24, 39, 0.95), rgba(17, 24, 39, 0.85), rgba(17, 24, 39, 0.5))"
-        : "linear-gradient(to right, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.5))",
-    }),
-    [isDark]
-  );
-
   const floatingIcons = [Code2, Terminal, Zap, Sparkles];
 
   return (
@@ -355,9 +346,6 @@ const Hero: React.FC = () => {
 
       {/* Control Panel */}
       <ControlPanel />
-
-      {/* Background overlay for mobile readability */}
-      {isMobile && <div className="absolute inset-0" style={overlayStyles} />}
 
       {/* Main Content */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
