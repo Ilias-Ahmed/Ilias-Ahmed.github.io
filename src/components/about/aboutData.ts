@@ -23,18 +23,18 @@ export interface CertificationItem {
 
 export const timelineData: TimelineData[] = [
   {
-    year: "2025",
-    title: "Senior Full-Stack Developer",
-    company: "Tech Innovations Inc.",
+    year: "2022",
+    title: "Junior Developer",
+    company: "NA",
     description:
-      "Leading the development of modern web applications using React, Node.js, and AWS cloud solutions.",
+      "Started my development journey by building and maintaining websites while learning modern best practices.",
     achievements: [
-      "Architected microservices infrastructure for scalable deployments",
-      "Reduced API latency by 40% through performance optimization",
-      "Mentored and led a team of 5 developers",
-      "Implemented CI/CD workflows for automated delivery",
+      "Built company’s main website from scratch",
+      "Explored frontend libraries and frameworks",
+      "Contributed to open-source communities",
+      "Developed and customized WordPress themes",
     ],
-    technologies: ["NODE", "Express", "MongoDB", "Redux", "AWS"],
+    technologies: ["HTML", "CSS", "JavaScript"],
   },
   {
     year: "2024",
@@ -51,18 +51,18 @@ export const timelineData: TimelineData[] = [
     technologies: ["JavaScript", "REACT", "GSAP", "motion", "Tailwind CSS"],
   },
   {
-    year: "2022",
-    title: "Junior Developer",
-    company: "NA",
+    year: "2025",
+    title: "Senior Full-Stack Developer",
+    company: "Tech Innovations Inc.",
     description:
-      "Started my development journey by building and maintaining websites while learning modern best practices.",
+      "Leading the development of modern web applications using React, Node.js, and AWS cloud solutions.",
     achievements: [
-      "Built company’s main website from scratch",
-      "Explored frontend libraries and frameworks",
-      "Contributed to open-source communities",
-      "Developed and customized WordPress themes",
+      "Architected microservices infrastructure for scalable deployments",
+      "Reduced API latency by 40% through performance optimization",
+      "Mentored and led a team of 5 developers",
+      "Implemented CI/CD workflows for automated delivery",
     ],
-    technologies: ["HTML",  "CSS", "JavaScript",],
+    technologies: ["NODE", "Express", "MongoDB", "Redux", "AWS"],
   },
 ];
 
